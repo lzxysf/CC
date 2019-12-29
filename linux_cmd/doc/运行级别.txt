@@ -1,0 +1,18 @@
+linux运行级别runlevl
+
+init 0 停机
+init 1 单用户模式，root权限，用于系统维护，禁止远程登陆
+init 2 多用户模式，没有NFS不联网,登陆后进入命令行模式
+init 3 完全多用户模式，标准的运行级
+init 4 保留项
+init 5 图形界面，和init 3的唯一区别就是init 3没有图形界面
+init 6 重启
+
+开机默认模式设置
+打开/etc/inittab文件
+修改这一行
+id:3:initdefault:
+把其中的3改成其它数字就可以换成其它模式
+注意initdefault不能设置为0或6，即停机和重启
+
+查看运行级别用runlevel

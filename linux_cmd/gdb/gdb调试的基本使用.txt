@@ -1,0 +1,124 @@
+https://www.cnblogs.com/yuanqiangfei/p/10410533.html
+
+用gdb调试的程序必须是经过gcc -g编译的, -g会附加函数名称、变量名称到可执行程序中
+
+1.生成可执行文件
+gcc -g main.c -o main.out
+
+2.使用gdb调试可执行文件
+gdb main.out或
+
+gdb
+file main.out
+
+3.gdb命令
+
+list         l          显示多行源代码
+
+break        b          设置断点,程序运行到断点的位置会停下来
+
+info         i          描述程序的状态
+
+run          r          开始运行程序
+
+display      disp       跟踪查看某个变量,每次停下来都显示它的值
+
+step         s          执行下一条语句,如果该语句为函数调用,则进入函数执行其中的第一条语句
+
+next         n          执行下一条语句,如果该语句为函数调用,不会进入函数内部执行(即不会一步步地调试函数内部语句)
+
+print        p          打印内部变量值
+
+continue     c          继续程序的运行,直到遇到下一个断点
+
+set var name=v          设置变量的值
+
+start        st         开始执行程序,在main函数的第一条语句前面停下来
+
+file                    装入需要调试的程序
+
+kill         k          终止正在调试的程序
+
+watch                   监视变量值的变化
+
+backtrace    bt         查看函数调用栈帧和层级关系
+
+frame        f          查看栈帧(应该是查看当前运行到的位置)
+
+quit         q          退出GDB环境
+
+whatis                  查看变量类型
+
+4.经验
+list:显示多行源代码，从上次的位置显示，默认一次显示10行
+list n 显示以第n行为中心的10行代码
+list functionname 显示以functionname函数名为中心的10行代码
+list - 显示刚才打印的源代码之前的代码
+list + 显示刚才打印的源代码之后的代码
+
+break location:在location位置设置断点
+location可以是行号、函数名、或其它结构
+break n
+break functionname
+
+设置条件断点 : break line-or-function if expr 
+例如 : break 13 if i==10
+
+info breakpoints 或者 info b : 显示当前的断点,如下,其中Num是断点编号
+Num     Type           Disp Enb Address            What
+2       breakpoint     keep y   0x000000000040057a in main at main.c:10
+
+delete n : 删除断点编号为n的断点
+clear n : 删除第n行处的断点
+delete break : 删除所有断点
+
+disable/enable n : 使编号为n的断点无效/有效
+
+display var: 跟踪查看变量var,每次停下来都显示变量var的值
+watch var : 监视变量值的变化,每次var发生变化后程序暂停执行
+
+next : 执行下一条语句，不会进入函数内部
+step : 执行下一条语句，会进入函数内部
+
+run : 全速执行
+start : 执行到main函数第一行前
+
+until n : 运行到某行，可以用于跳出循环或跳出函数
+finish : 跳出函数
+
+info variables : 查看全局和局部变量
+info locals : 查看当前函数的局部变量
+info args : 查看当前的参数
+
+run argv[1] argv[2] : 调试时命令行参数
+
+
+5.调试多个文件
+当main.out是由多个文件生成的时，可以直接调试
+gcc -g main.c func.c -o main.out
+要设置断点时，可以使用“break 文件名:行号/函数名”的方式来设置
+
+如果调试的源文件不存在，可以使用dir命令添加源文件的搜索路径
+例如: dir /opt/
+可以通过show dir查看当前调试程序的源文件搜索路径
+
+
+6.调试动态库
+当要执行的函数是动态库中的函数时，如果要进入这个函数内部进行调试，需要在编译这个动态库时添加-g参数
+gcc -g -fPIC -shared func.c -o libfunc.so
+编译main.c时也要添加-g参数
+gcc -g main.c -L. -lfunc -Wl,-rpath=. -o main.out
+
+
+7.调试出错core文件
+gcc -g main.c -o main.out
+./main.out 发生错误，生成来core.1761文件
+
+gdb -c core.1761
+file main.out
+bt
+然后就可以显示出错的堆栈信息
+
+或者
+gdb main.out core.1761
+bt

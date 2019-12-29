@@ -1,0 +1,13 @@
+pstree 以树状图显示进程间的关系
+
+ps -ef | grep mysql
+查看mysql进程的信息
+
+ps看到的是命令执行瞬间的进程信息，top是持续监视
+top监视系统性能，如平均负载、CPU和内存消耗
+ps关注的是进程本身，top关注的是内存的占用
+
+free显示整体的内存占用情况
+
+kill -9 pid 通过pid杀死某个进程
+pkill killall都是通过进程名杀死进程

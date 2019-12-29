@@ -1,0 +1,26 @@
+1.tar打gz压缩包
+touch a.c
+tar -cvzf test.tar.gz a.c
+--c 建立新的备份文件
+--v 显示指令执行过程
+--z 或--gzip或--ungzip通过gzip指令处理备份文件
+--f 指定备份文件
+
+tar -xvzf test.tar.gz
+--x 从备份文件中还原文件
+
+tar -xvzf test.tar.gz -C /tmp
+--C 将解压后的文件或目录放到指定路径下(路径必须存在)
+
+2.tar打bz2压缩包
+tar -cvjf test.tar.bz2 a.c
+tar -xvjf test.tar.bz2
+
+3.rar压缩
+(注意命令中是a和x没有-)
+rar a test.rar ./test
+rar x test.rar
+
+4.zip压缩
+zip test.zip test.c
+unzip test.zip

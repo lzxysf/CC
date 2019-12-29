@@ -1,0 +1,127 @@
+1.一次编译多个文件
+main.c add.c add.h multi.c multi.h
+命令$: gcc main.c add.c multi.c -o main.out
+其中-o main.out可以省略，省略的话默认生成a.out
+
+补充1:编译时是不需要写头文件的，会自动查找头文件
+补充2:a.out可以单独执行，不需要头文件
+补充3:.h的内容被插入到.c中，作为.c的内容被编译，.h文件本身不直接参加编译
+
+
+2.静态库和动态库
+windows静态库: .lib
+windows动态库: .dll
+linux静态库: .a
+linux动态库: .so
+
+
+3.linux生成和使用静态库
+---------------------------------
+gcc -c add.c multi.c
+ar -rc libmath.a add.o multi.o
+gcc main.c -L . -l math -o main.out
+---------------------------------
+a.使用如下命令编译add.c和multi.c
+命令$: gcc -c add.c multi.c
+生成add.o和multi.o
+
+-c表示生成二进制文件但是不链接
+b.使用如下命令生成静态库
+命令$: ar -rc libmath.a add.o multi.o
+这样就生成了静态库libmath.a
+
+c.使用如下命令链接main和静态库libmath.a
+命令$: gcc main.c -L . -l math -o main.out
+这样就生成了最终的可执行文件main.out
+
+补充1:main.out是可以单独执行的，不需要其它任何文件
+补充2:gcc加-c表示,生成.o的二进制文件，但是不链接
+
+补充3:
+ar可集合许多文件，成为单一的备存文件。在备存文件中，所有成员文件皆保有原来的属性与权限。
+ar -rc libmath.a add.o multi.o
+可以写为ar -rc,也可以不加-写为ar rc
+-r表示insert
+-c表示create
+-q表示append,用于加入新成员,例如: ar -q libmath.a div.o
+-t表示display,列出库中已经成员,例如: ar -t libmath.a
+-d表示delete,删除库中的成员,删除出错不会提示,除非加上v修饰符
+
+补充4:gcc链接
+gcc main.c -L . -l math -o main.out
+-L + 链接需要的库路径(即使是当前目录也应该有此选项，否则无法找到库文件)（.表示当前目录）
+(如果库存储在路径/lib,/usr/lib,usr/local/lib可以不指定-L参数)
+-l + 链接需要的库名称(只是名称，libxxx.a中的xxx)
+
+
+4.linux生成和使用动态库
+-------------------------------------------------------
+test1
+gcc -fPIC -shared add.c -o libadd.so
+gcc -fPIC -shared multi.c -o libmulti.so
+gcc main.c -Wl,-rpath=.  -L. -ladd -lmulti -o main.out
+-------------------------------------------------------
+test2
+gcc -fPIC -shared add.c multi.c -o libmath.so
+gcc main.c -Wl,-rpath=. -L. -lmath -o main.out
+-------------------------------------------------------
+test3
+gcc -fPIC -shared add.c -o libadd.so
+gcc main.c multi.c -Wl,-rpath=. -L. -ladd -o main.out
+-------------------------------------------------------
+test4
+gcc -fPIC -shared add2.c -o libadd2.so
+gcc -fPIC -shared add.c -o libadd.so
+gcc mian.c -Wl,-rpath=. -L. -ladd -ladd2 -o main.out
+-------------------------------------------------------
+补充1:gcc通过-fPIC -shared生成动态链接库
+补充2:main.c链接动态库后生成的main.out需要动态库才能运行(运行不需要头文件)
+补充3:-Wl,-rpath=.表示将当前路径加入main.out运行时动态库的搜索路径
+     -L.表示将当前路径加入main.out链接时需要的库文件的搜索路径
+
+补充4:即使main.out和动态库在一个文件夹下，main.out也不能直接找到运行需要的动态库，这需要设置运行库的路径
+动态库的搜索路径(按顺序)如下:
+a.编译目标代码时通过-Wl,-rpath指定动态库搜索路径
+b.环境变量LD_LIBRARY_PATH指定动态库搜索路径,如果有多个搜索路径用:隔开
+  export LD_LIBRARY_PATH=/usr/local/lib/minigui
+c.配置文件/etc/ld.so.conf中指定动态库搜索路径(修改完文件后，用sudo ldconfig更新)
+d.默认的动态库搜索路径/lib和/usr/lib
+
+补充5:test4中-ladd和-ladd2顺序不能颠倒
+原则是：越底层的库越要放在后面
+
+
+5.静态库和动态库的区别
+静态库以空间换时间
+动态库以时间换空间
+
+每一个需要静态库的程序都要存储一个静态库
+动态库是共享的，即所有需要动态库的程序可以共享一个动态库
+
+main.c链接静态库时,静态库会被放进main.out,运行main.out时不再需要静态库了,因此此时的main.out体积较大
+main.c连接动态库时,动态库不会被完全放进main.out,运行main.out时是需要动态库的,因此此时的main.out体积较小
+
+静态库有修改后，main.out必须重新链接静态库
+动态库有修改后，只要输出接口不变（即名称、参数、返回值类型和调用约定不变），main.out不需要重新链接动态库，直接运行即可
+
+链接时,通过-l指定库名称,这个库可以是静态库也可以是动态库,当有同名的静态库和动态库时,选择的是动态库进行加载
+用“-Wl,-Bstatic”指定链接静态库，使用“-Wl,-Bdynamic”指定链接共享库，使用示例：
+-Wl,-Bstatic -lmysqlclient_r -lssl -lcrypto -Wl,-Bdynamic -lrt -Wl,-Bdynamic -pthread -Wl,-Bstatic -lgtest
+"-Wl"表示是传递给链接器ld的参数，而不是编译器gcc/g++的参数。
+
+
+6.一些二进制分析工具
+
+ldd可以查看可执行文件或库所依赖的库文件
+如: ldd main.out
+
+nm可以查看库中的函数名字，标记为T的就是源代码中的函数名
+如: nm libadd.so
+
+objdump是反汇编工具，可以显示目标文件的信息，可以通过参数控制要显示的内容
+通过-grep查看依赖的库: objdump -grep main.out
+通过-T查看动态符号表: objdump -T main.out
+
+strings可以输出文件中包含的可打印字符串,这个文件可以是文本文件、可执行文件、.so文件等。
+用法举例：比如有多个so库文件，我们想找到包含add.c源文件的那个so库，可以使用
+strings -f * | grep add.c

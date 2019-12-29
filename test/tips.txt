@@ -1,0 +1,9 @@
+1.NULL为假，!NULL为真
+
+2.纯虚函数定义时最后需要=0
+virtual void start() = 0;
+
+3.string的比较为str1.compare(str2),
+但是也不能直接这样写，它返回的是整型而不是布尔型，
+str1<str2为负数，str1=str2为0，str1>str2为正数
+

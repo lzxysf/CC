@@ -6,30 +6,41 @@ using namespace std;
 
 class Animal
 {
-  public:
-    virtual void eat() {
-      cout << "动物在吃" << endl;
-    }
-    virtual void sleep() {
-      cout << "睡觉" << endl;
-    }
-  private:
+public:
+	virtual void eat()
+	{
+	  cout << "动物在吃" << endl;
+	}
+	virtual void sleep()
+	{
+	  cout << "睡觉" << endl;
+	}
 };
 
 class Dog : public Animal
 {
-  public:
-    virtual void eat() {
+public:
+    void eat()
+	{
       cout << "狗在吃骨头" << endl;
     }
+	void sleep()
+	{
+		cout << "狗在狗窝睡觉" << endl;
+	}
 };
 
 class Cow : public Animal
 {
-  public:
-    virtual void eat() {
+ public:
+    void eat()
+	{
       cout << "牛在吃草" << endl;
     }
+	void sleep()
+	{
+		cout << "牛在牛棚睡觉" << endl;
+	}
 };
 
 int main()
@@ -37,9 +48,11 @@ int main()
   Animal *base = NULL;
   base = new Dog();
   base->eat();      //狗在吃骨头
+  base->sleep();	//狗在狗窝睡觉
 
   base = new Cow();
   base->eat();      //牛在吃草
+  base->sleep();	//牛在牛棚睡觉
 
   /*如果一个类中定义虚函数，C++编译器会在这个类中创建vptr指针，指向一个vtable函数表，此时如果使用sizeof求这个类所占空间，会发现多了一个指针的长度*/
   /*在每一个声明了虚函数或继承了虚函数的类中都有一个vptr指针指向一个vtalbe函数表*/

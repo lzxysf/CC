@@ -2,60 +2,82 @@
 
 using namespace std;
 
-class Time
+// #define INNER
+
+/*
+++a返回的是变量a的引用，可以作为左值，因为是引用，所以返回值要用引用的形式
+a++返回的是数值，不可以作为左值
+
+Time& operator++()    是重载前++，即++a这样的运算符
+Time operator++(int)  是重载后++，即a++这样的运算符,其中int是亚元，起到了占位和标识的作用
+*/
+
+class Complex
 {
 public:
-  Time(int hour, int minute) : hour(hour), minute(minute) {}
-  Time operator++ ()
+  Complex(int a, int b) : a(a), b(b) {}
+#ifdef INNER
+  Complex& operator++ ()
   {
-    minute++;
-    if(minute==60)
-    {
-      hour++;
-      minute = 0;
-    }
-    if(hour==24)
-    {
-      hour = 0;
-    }
-    return Time(hour, minute);
+    a++;
+    b++;
+    return *this;
   }
-  Time operator++(int)
+  Complex operator++(int)
   {
-    Time temp(hour, minute);
-    minute++;
-    if(minute==60)
-    {
-      hour++;
-      minute = 0;
-    }
-    if(hour==24)
-    {
-      hour = 0;
-    }
+    Complex temp(a, b);
+    a++;
+    b++;
     return temp;
   }
+#else
+  friend Complex& operator++(Complex &c);
+  friend Complex operator++(Complex &c, int);
+#endif
   void display()
   {
-    cout << "当前时间为" << hour << ":" << minute << endl;
+    cout << "当前复数为:" << a << "+" << b << "i" << endl;
   }
 private:
-  int hour;
-  int minute;
+  int a;
+  int b;
 };
+
+#ifndef INNER
+Complex& operator++(Complex &c)
+{
+  c.a++;
+  c.b++;
+  return c;
+}
+Complex operator++(Complex &c, int)
+{
+  Complex temp(c.a, c.b);
+  c.a++;
+  c.b++;
+  return temp;
+}
+#endif
 
 int main()
 {
-  Time time(11, 59);
-  time.display();
+  Complex c1(2, 5), c2(8, 13);
+  c1.display();
+  c2.display();
 
-  Time time1 = ++time;
-  time.display();
-  time1.display();
+  cout << "---------------" << endl;
+  Complex c3 = ++c1;
+  c1.display();
+  c3.display();
 
-  Time time2 = time++;
-  time.display();
-  time2.display();
+  cout << "---------------" << endl;
+  ++c1 = c2;
+  c1.display();
+
+  cout << "---------------" << endl;
+  Complex c4 = c2++;
+  c2.display();
+  c4.display();
   
   return 0;
 }

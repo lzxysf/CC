@@ -1,0 +1,5 @@
+1.修改git的远程仓库地址
+--进入git_rep(你自己的git本地仓库目录)根目录
+--git remote查看所有远程仓库地址，git remote xxx 查看指定远程仓库地址
+--git remote rm origin
+--git remote add origin https://github.com/lzxysf/CC.git

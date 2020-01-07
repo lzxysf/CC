@@ -9,7 +9,7 @@ def through_path(dir):
     if os.path.isdir(ab_path):
       through_path(ab_path)
     else:
-      if re.match("core\.\d+",path) != None or re.match("a.out",path) != None:
+      if re.match("core\.\d+",path) != None or re.match("a.out",path) != None or re.match("a.exe",path) != None:
         os.remove(ab_path)
 
 through_path(os.getcwd())

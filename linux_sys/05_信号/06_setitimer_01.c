@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <unistd.h>
+#include <unistd.h> //getpid
+#include <stdlib.h>
 #include <sys/time.h> //setitimer
 
 /*
@@ -31,7 +32,7 @@ setitimer函数中的new_value参数用来对计时器进行设置，old_value�
  * 
  */
 
-unsigned int my_alarm(unsigned int nsecs)
+unsigned int myalarm(unsigned int nsecs)
 {
 	struct itimerval it, oldit;
 	int ret;
@@ -54,8 +55,8 @@ unsigned int my_alarm(unsigned int nsecs)
 
 int main()
 {
+	printf("当前进程pid=%d\r\n", getpid());
 	myalarm(3);
 	while(1);
 	return 0;
 }
-

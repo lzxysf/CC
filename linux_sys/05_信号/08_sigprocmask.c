@@ -11,6 +11,9 @@ sigprocmask函数是用来修改进程控制块中的信号屏蔽字,修改后�
 严格注意：屏蔽信号，知识将信号处理延后执行（延后至解除屏蔽），而忽略表示将信号丢弃处理
 
 how : 指示如何修改当前信号集
+	SIG_BLOCK：当how设置为此值，set表示需要屏蔽的信号，相当于mask = mask | set
+	SIG_UNBLOCK: 当how设置为此值，set表示需要解除屏蔽的信号，相当于mask = mask & ~set
+	SIG_SETMASK：当how设置为此值，set表示用于替代原始屏蔽集的新的屏蔽集，相当于mask = set
 set : 传入参数，是一个自定义信号集合
 oldset ： 传出参数，保存旧的信号屏蔽字
  * 

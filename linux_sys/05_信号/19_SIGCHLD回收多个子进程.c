@@ -2,9 +2,12 @@
  *
  *SIGCHLD回收多个子进程
 
- 由于多个子进程可能同时结束，多个SIGCHLD信号同时递达主进程，但是普通信号是不支持排队的，因此在SIGCHLD信号处理函数中要使用while和waitpid来进行多次回收，以回收所有终止了的子进程。
+ 在SIGCHLD信号捕捉函数执行期间，又来了的SIGCHLD信号会被自动屏蔽，是不会再触发信号捕捉函数的。
+ 因此在SIGCHLD信号处理函数中要使用while和waitpid来进行多次回收，直到当前没有可回收的子进程，以回收所有终止了的子进程。
+
  *
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

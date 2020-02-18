@@ -1,10 +1,16 @@
 /*
  *
- *SIGCHLD回收多个子进程
+ *SIGCHLD回收多个子进程_进阶
+ 考虑子进程中无sleep()，即子进程创建后立即终止，此时主进程能捕获其SIGCHLD信号吗？
+	有不能捕获的可能，因为此时主进程的SIGCHLD信号捕获函数还没有注册，SIGCHLD信号递达后执行信号默认处理动作（即忽略），而不是捕获SIGCHLD信号。
+	解决的办法是在子进程创建之前（即fork函数执行之前）首先将SIGCHLD设置进阻塞信号集，待信号捕获函数注册后，再删除阻塞信号集的SIGCHLD。
 
- 由于多个子进程可能同时结束，多个SIGCHLD信号同时递达主进程，但是普通信号是不支持排队的，因此在SIGCHLD信号处理函数中要使用while和waitpid来进行多次回收，以回收所有终止了的子进程。
+SIGCHLD信号注意问题
+	1.子进程继承了父进程的信号屏蔽字和信号处理动作，但子进程没有继承未决信号集spending。
+	2.应该在fork之前，阻塞SIGCHLD信号，注册完信号捕捉函数后解除阻塞。
  *
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,6 +38,12 @@ void collect_child_handler(int signo)
 int main()
 {
 	pid_t pid;
+	sigset_t set, old_set;
+
+	//设置SIGCHLD阻塞信号集
+	sigemptyset(&set);
+	sigaddset(&set, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &set, &old_set);
 
 	for(int i = 0; i < 10; i++)
 	{
@@ -56,17 +68,19 @@ int main()
 		sigemptyset(&act.sa_mask);
 		act.sa_flags = 0;
 		sigaction(SIGCHLD, &act, &old_act);
+
+		//解除SIGCHLD信号的阻塞
+		sigdelset(&old_set, SIGCHLD);
+		sigprocmask(SIG_SETMASK, &old_set, NULL);
 	
 		printf("父进程pid=%d\r\n", getpid());
 		while(1);
-
 	}
 	//子进程
 	else if(pid == 0)
 	{
 		printf("子进程pid=%d\r\n", getpid());
-		sleep(1);
+		// sleep(1);
 	}
 	return 0;
 }
-

@@ -19,6 +19,9 @@ int pthread_detach(pthread_t thread);
 2.unjoinable属性可以在pthread_create时指定，或在线程创建后在线程中pthread_detach自己, 如：pthread_detach(pthread_self())，将状态改为unjoinable状态，确保资源的释放。或者将线程置为 joinable,然后适时调用pthread_join.
 3.其实简单的说就是在线程函数头加上 pthread_detach(pthread_self())的话，线程状态改变，在函数尾部直接 pthread_exit线程就会自动退出。省去了给线程擦屁股的麻烦。
 */
+/*
+如果设置一个线程为分离线程，而这个线程又运行非常快，它很可能在pthread_create函数返回之前就终止了，它终止以后就可能将线程号和系统资源移交给其它线程使用。这样调用pthread_create的线程就获得了错误的线程号。要避免这种情况可以采用一定的同步措施，最简单的方法之一就是在被创建的线程里pthread_cond_timewait函数，让这个线程等待一会儿，留有足够的时间让函数pthread_create返回。
+*/
 
 void *thread_func(void *arg)
 {

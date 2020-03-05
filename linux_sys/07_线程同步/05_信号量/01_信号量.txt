@@ -1,0 +1,59 @@
+1、信号量-进化版的互斥锁1->N
+   可以这样理解，互斥锁有一把锁，一个线程获取锁后，其它线程必须等待解锁才可以获得锁
+   信号量相当于有多把锁（可以设置几把锁），可以多次获取锁。
+
+2、相关函数
+sem_init
+sem_destroy
+sem_wait
+sem_trywait
+sem_timedwait
+sem_post
+以上六个函数，成功返回0，失败返回错误号
+
+sem_t sem;规定信号量sem不能小于0
+
+头文件semaphore.h
+
+3、信号量基本操作
+
+sem_wait
+信号量大于0，则信号量--
+信号量等于0，造成线程阻塞
+
+sem_post
+信号量++，同时唤醒阻塞在信号量上的线程
+
+由于sem_t的实现对用户隐藏，所以所谓的++和--操作都是通过函数实现，而不能直接对sem_t进行++和--
+
+信号量的初值决定了占用信号量的线程个数。
+
+4、sem_init函数
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+参数1：sem信号量
+参数2：pshared为0时用于线程间，pshared为1时用于进程间
+参数3：value制定信号量初值
+
+5、sem_destroy函数
+int sem_destroy(sem_t *sem);
+销毁信号量
+
+6、sem_wait
+int sem_wait(sem_t *sem)
+给信号量加锁，相当于--
+
+7、sem_post
+int sem_post(sem_t *sem)
+给信号量解锁，相当于++
+
+8、sem_trywait
+int sem_trywait(sem_t *sem)
+尝试给信号量加锁
+
+9、sem_timedwait
+int sem_timedwait(sem_t *sem)
+限时尝试对信号量加锁
+
+
+
+

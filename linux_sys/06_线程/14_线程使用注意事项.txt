@@ -1,0 +1,7 @@
+1、主线程退出其它线程不退出，主线程应调用pthread_exit
+2、避免僵尸线程
+ pthread_join
+ pthread_detach
+ pthread_create指定分离属性
+3、应避免在多线程模型中使用fork
+4、信号的复杂语义很难和多线程共存，应避免在多线程中引入信号机制。

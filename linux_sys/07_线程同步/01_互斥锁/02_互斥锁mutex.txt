@@ -1,0 +1,61 @@
+/*
+linux中提供了一把互斥锁mutex（也称之为互斥量）
+同一时刻，只能有一个线程持有该锁。
+当A线程对某个全局变量加锁访问，B在访问前尝试加锁，拿不到锁，B阻塞。C线程不去加锁，而直接访问该全局变量，依然能够访问，但会出现数据混乱。
+所以，互斥锁实质上是操作系统提供的一把“建议锁”（又称“协同锁”），建议程序中有多线程访问共享资源的时候使用该机制。但，并没有强制限定。
+因此，即使有了mutex，如果有线程不按规则来访问数据，依然会造成数据混乱。
+*/
+
+/*
+主要应用函数
+
+pthread_mutex_init
+pthread_mutex_destroy
+pthread_mutex_lock
+pthread_mutex_trylock
+pthread_mutex_unlock
+以上五个函数的返回值都是：成功返回0，失败返回错误号
+
+pthread_mutex_t类型，其本质是一个结构体。为简化理解，应用时可忽略其实现细节，简单当成整数看待。
+pthread_mutex_t mutex 变量mutex只有两种取值1、0。
+*/
+
+/*
+pthread_mutex_init函数
+初始化一个互斥锁(互斥量) ---> 初值可看作1
+int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
+参1：传出参数，调用时应传 &mutex	
+restrict关键字：只用于限制指针，告诉编译器，所有修改该指针指向内存中内容的操作，只能通过本指针完成。不能通过除本指针以外的其他变量或指针修改
+参2：互斥量属性。是一个传入参数，通常传NULL，选用默认属性(线程间共享)。 参APUE.12.4同步属性
+1.静态初始化：如果互斥锁 mutex 是静态分配的（定义在全局，或加了static关键字修饰），可以直接使用宏进行初始化。e.g.  pthead_mutex_t muetx = PTHREAD_MUTEX_INITIALIZER;
+2.动态初始化：局部变量应采用动态初始化。e.g.  pthread_mutex_init(&mutex, NULL)
+
+pthread_mutex_destroy函数
+销毁一个互斥锁
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+
+pthread_mutex_lock函数
+加锁。可理解为将mutex--（或-1）
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+
+pthread_mutex_unlock函数
+解锁。可理解为将mutex ++（或+1）
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+pthread_mutex_trylock函数
+尝试加锁
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+*/
+
+/*
+加锁与解锁
+lock与unlock：
+lock尝试加锁，如果加锁不成功，线程阻塞，阻塞到持有该互斥量的其他线程解锁为止。
+unlock主动解锁函数，同时将阻塞在该锁上的所有线程全部唤醒，至于哪个线程先被唤醒，取决于优先级、调度。默认：先阻塞、先唤醒。
+例如：T1 T2 T3 T4 使用一把mutex锁。T1加锁成功，其他线程均阻塞，直至T1解锁。T1解锁后，T2 T3 T4均被唤醒，并自动再次尝试加锁。
+可假想mutex锁 init成功初值为1。	lock 功能是将mutex--。	unlock将mutex++
+
+lock与trylock：
+lock加锁失败会阻塞，等待锁释放。
+trylock加锁失败直接返回错误号（如：EBUSY），不阻塞。
+*/

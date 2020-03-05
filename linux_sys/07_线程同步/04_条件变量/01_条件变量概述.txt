@@ -1,0 +1,34 @@
+1、条件变量：条件本身不是锁，但它可以造成线程阻塞。通常与互斥锁配合使用，给多线程提供一个会和的场所。
+2、主要应用函数
+pthread_cond_init
+pthread_cond_destroy
+pthread_cond_wait
+pthread_cond_timewait
+pthread_cond_signal
+pthread_cond_broadcast
+以上6个函数都是成功返回0，失败返回错误号
+
+pthread_cond_t类型，用于定义条件变量
+
+3、int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr);
+动态初始化一个条件变量
+同样可以用静态初始化的方法，初始化条件变量 pthread_cond_t cond = PTHREAD_COND_INITIALIZER
+
+4、int pthread_cond_destroy(pthread_cond_t *cond);
+销毁一个条件变量
+
+5、int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+阻塞等待一个条件变量
+函数的执行步骤：
+  a.阻塞等待条件变量cond满足
+  b.释放已经掌握的互斥锁，相当于pthread_mutex_unlock
+  c.当被唤醒，pthread_cond_wait函数返回时，解除阻塞并重新申请获取互斥锁pthread_mutex_lock
+
+6、int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime);
+定时阻塞一个条件变量，到时间后即使不被解除阻塞，也会自己解除阻塞。
+
+7、int pthread_cond_signal(pthread_cond_t *cond);
+唤醒至少一个阻塞在条件变量上的线程
+
+8、int pthread_cond_broadcast(pthread_cond_t *cond);
+唤醒所有阻塞在条件变量上的线程

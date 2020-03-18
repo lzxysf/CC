@@ -10,7 +10,7 @@ int main()
 {
 	int sockfd;//客户端的端口描述符
 	struct sockaddr_in server_addr;
-	char buffer[256] = "Hello,I am client.";
+	char buffer[256] = "Hello,I am client";
 	char recv_buffer[256];
 	
 	//1、创建socket
@@ -37,14 +37,17 @@ int main()
 	//4、发送数据到服务器
 	while(1)
 	{
+		char buf[256]={0};
 		static int count = 0;
 		count++;
-		if(count>10)
+		if(count>5)
 		{
 			break;
 		}
 
-		send(sockfd, buffer, strlen(buffer), 0);
+		sprintf(buf, "%s %d", buffer, count);
+
+		send(sockfd, buf, strlen(buf), 0);
 		sleep(1);
 	}		
 	//5、关闭连接

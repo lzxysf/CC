@@ -1,7 +1,9 @@
 /*
 select：采用轮询的方式查询文件描述符是否就绪，且最多只能监测1024个文件描述符，当监测的文件描述符较多时对性能会有影响
 poll：和select相似，同样采用轮询的方式查询文件描述符是否就绪，不同点在于它能监测的文件描述符数量没有上限
-epoll：和select、poll的原理不同，它为每一个文件描述符注册一个回调函数，当文件描述符就绪后会自动回调对应的函数，因此不用轮询效率较高，是目前常用的。
+epoll：和select、poll的原理不同，不用轮询、效率较高，它的时间复杂度是O(1),而select和poll的时间复杂度都是O(n),
+每当有文件描述符就绪时IO事件会主动通知给我们，而不是轮询IO，因此它是事件驱动的。
+epoll可以高效地处理数以百万计的socket句柄。
 */
 
 /*
@@ -12,8 +14,9 @@ epoll_create创建一个epoll实例，epoll_ctl将要监控的文件描述符设
 int epoll_create(int size);
 创建一个epoll实例，其中size是可以监控的文件描述符的总数，但是现在这个参数已经废弃，系统会根据你传进去的实际的文件描述符个数分配内存空间。
 返回值是一个文件句柄，因此它会占用一个fd值，使用完epoll后应该用close关闭这个文件句柄，否则会造成内存泄漏。
+调用epoll_create会在内部创建一个红黑树，
 
-int epoll_ctl(int epfd, int op, int fd, struct epoll_event *evnet);
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 将要监控的文件描述符设置进epoll实例中
 第一个参数epfd为epoll_create创建的epoll实例
 第二个参数op表示动作，有以下三种取值
@@ -159,5 +162,8 @@ int main()
 			}
 		}
 	}	
+
+	close(sockfd);
+	close(epfd);
 	return 0;
 }

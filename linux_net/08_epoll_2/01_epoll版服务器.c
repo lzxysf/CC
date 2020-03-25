@@ -145,12 +145,12 @@ int main()
 
 					if(client_fd > 0)
 					{
-						// event.events = EPOLLIN;
-						event.events = EPOLLIN | EPOLLET;
+						event.events = EPOLLIN;
+						//event.events = EPOLLIN | EPOLLET;
 						struct event_ptr* ptr = (struct event_ptr*)malloc(sizeof(struct event_ptr));
 						ptr->fd = client_fd;
-						// ptr->func = process1;
-						ptr->func = process2;
+						ptr->func = process1;
+						//ptr->func = process2;
 						event.data.ptr = ptr;
 						epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &event);
 					}

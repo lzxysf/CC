@@ -31,6 +31,28 @@ struct event_ptr{
 
 */
 
+/*
+EPOLLLT、EPOLLET
+
+EPOLLLT水平触发
+水平触发时，假设对事件没做处理，内核会反复提醒事件就绪
+
+EPOLLET边沿触发
+边沿触发时，假设对事件没做处理，内核不会反复提醒事件就绪
+
+select和poll只有EPOLLLT模式，没有EPOLLET模式
+epoll默认为EPOLLLT模式，可以设置为EPOLLET模式
+
+假设server收到了client发送的100字节数据，但是只读取了50字节，当为EPOLLLT模式时，再次调用epoll会立即返回通知此就绪事件
+假设server收到了client发送的100字节数据，但是只读取了50字节，当为EPOLLET模式时，不会再通知此就绪事件，数据会留在缓冲区，要等待下一次client发送的数据到达才会通知就绪
+因此在使用EPOLLET模式时，需要一次读取所有到达的数据，否则本次的残留数据会影响下一次读取数据的结果
+因此使用EPOLLET模式时应该使用非阻塞的read循环读，在read读取到数据尾部时退出循环
+*/
+
+/*
+epoll2相对于epoll1，其epoll_data共用体使用的不是fd而是指针
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

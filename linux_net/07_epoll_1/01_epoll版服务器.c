@@ -147,7 +147,7 @@ int main()
 					{
 						close(events[i].data.fd);
 						printf("客户端关闭\r\n");
-						epoll_ctl(epfd, EPOLL_CTL_ADD, events[i].data.fd, NULL);
+						epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
 					}
 					else
 					{

@@ -39,11 +39,6 @@ int main()
 		printf("create socket error\r\n");
 		exit(0);
 	}
-	// bzero(&server_addr, sizeof(struct sockaddr_in));
-	// server_addr.sin_family = AF_INET;
-	// server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	// server_addr.sin_port = htons(9000);
-	// bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
 	//2、设置广播使能
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
@@ -51,8 +46,8 @@ int main()
 	//3、构造广播地址
 	bzero(&broadcast_addr, sizeof(struct sockaddr_in));
 	broadcast_addr.sin_family = AF_INET;
-	// broadcast_addr.sin_addr.s_addr = inet_addr("172.21.255.255");
-	broadcast_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
+	// broadcast_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
+	broadcast_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 	broadcast_addr.sin_port = htons(8000);
 
 	printf("udpserver running...\r\n");

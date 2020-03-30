@@ -1,0 +1,7 @@
+一、libevent安装
+1.在libevent官网（http://libevent.org/）上下载压缩包（我下载的是libevent-2.1.11-stable.tar.gz）
+2.解压压缩包：tar -zxvf libevent-2.1.11-stable.tzr.gz
+3.进入新生成的目录中：cd libevent-2.1.11-stable
+4.配置安装库的目标路径：./configure --prefix=/usr 
+5.编译安装libevent库：（1）make （2）sudo make install
+6.检测安装是否成功：ls -al /usr/lib | grep libevent

@@ -38,8 +38,8 @@ int main()
 	}
 
 	//1、创建组地址，并使用setsockopt设置组播
-	inet_pton(AF_INET, GROUP, &group.imr_multiaddr);
-	inet_pton(AF_INET, "0.0.0.0", &group.imr_address);
+	inet_pton(AF_INET, GROUP, &group.imr_multiaddr);	//组地址
+	inet_pton(AF_INET, "0.0.0.0", &group.imr_address);	//任意本地地址
 	group.imr_ifindex = if_nametoindex("eth0");
 	setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, &group, sizeof(group));
 

@@ -1,0 +1,212 @@
+1、内建命令与外部命令（非内建命令）
+
+shell中自带的命令为内建命令，如cd、alias、umask、exit
+其它命令为外部命令，如ps
+
+使用type可以查看是什么命令
+$ type cd
+cd is a shell builtin
+$ type ps
+ps is /bin/ps
+
+或者使用which查看
+$ which cd
+无显示
+$ which ps
+/bin/ps
+
+内建命令无法通过man查看，要想查看通过
+man bash-builtins
+
+2、执行权限
+要想编写的脚本可执行应添加执行权限
+chmod a+x test.sh
+./test.sh
+或者不赋予权限，使用 /bin/sh test.sh 也可以执行
+
+3、注释
+使用#号注释
+在文件开头 #!/bin/sh 是指定解释器，不是注释
+
+4、./ 和 source
+执行 ./test.sh 的是交互式shell，交互式shell会fork一个新进程运行脚本，
+因此如果在脚本中使用cd命令跳转到其它目录，执行完成返回交互式shell后，交互式shell的当前目录不会改变。
+
+使用 source test.sh 执行脚本是指在当前bash环境中读取并执行test.sh中的命令，此时test.sh可以无执行权限，
+因此如果脚本中使用了cd命令跳转到其它目录，执行完成后交互式shell的当前目录也会改变。
+
+5、()
+shell中用 () 括起来的命令表示这些命令在单独的进程中执行。
+
+6、变量
+按照惯例，Shell变量由全大写字母加下划线组成。
+有两种类型的Shell变量，环境变量、本地变量。
+环境变量：可以从父进程传给子进程。用 printenv 命令可以显示当前Shell进程的环境变量。
+本地变量：只存在于当前Shell进程，用set命令可以显示当前Shell进程中定义的所有变量（包括本地变量和环境变量）。
+
+定义本地变量 VARNAME=value 注意等号两边都不能有空格，否则会被Shell解释成命令和命令行参数
+导出本地变量为环境变量 export VARNAME=value 或者分布进行 VARNAME=value;export VARNAME
+删除已定义的本地变量或环境变量 unset VARNAME
+输出已定义的变量值 ehco $VARNAME
+
+7、文件名代换 *?[]
+通配符
+*   匹配0个或多个任意字符
+?   匹配一个任意字符
+[]  匹配方括号中任意一个字符的一次出现
+如 ls -al test[0-2].doc 表示查看当前目录下 test0.doc test1.doc test2.doc 文件
+注意此处文件名不能加引号，否则就是指一个名为 test[0-2].doc 的文件。
+
+8、命令代换 `` $()
+用反斜杠括起来的是命令，Shell会先执行该命令，然后将输出结果立即替换到当前命令行中。
+$()和反斜杠的效果是一样的。
+
+$ DATE=`date`
+$ echo $DATE
+Fri Apr 3 10:50:30 CST 2020
+
+9、算数代换 $(())
+(())中的Shell变量取值将转换为整数，括号内只能用+-*/和()运算符，并且只能做整数运算。
+$[]和$(())的效果是类似的，$[base#n]，其中base表示进制，n按照base进制解释，后面再有运算数，按十进制解释。
+
+$ NUM1=20
+$ NUM2=$(($NUM1+10))
+$ echo $NUM2
+30
+
+echo $[2#10+11]
+13
+echo $[8#10+11]
+19
+echo $[10#10+11]
+21
+echo $[10+11]
+21
+
+10、转义字符
+$ echo $SHELL
+/bin/bash
+
+$ echo \$SHELL
+$SHELL
+
+11、单引号
+Shell脚本中的单引号和双引号都是字符串的界定符，而不是字符的界定符。
+单引号用于保持引号内所有字符的字面值，即使括号内的\和回车也不例外，但是字符串中不能出现单引号。
+如果引号没有配对就输入了回车，Shell会给出续行提示符，要求用于把引号配上对。
+
+12、双引号
+双引号和单引号类似，但有一点不同。
+双引号可以防止通配符扩展，但允许变量扩展。而单引号是都不允许的。
+
+$ NUM=10
+$ echo $NUM
+10
+$ echo "$NUM"
+10
+$ echo '$NUM'
+$NUM
+
+13、条件测试 test [
+命令test或[可以测试一个条件是否成立，如果测试结果为真，则该命令的Exit Status为0，
+如果测试结果为假，则命令的Exit Status为1，注意和C语言的逻辑标识正好相反
+
+$ var=2
+$ test $var -gt 1
+$ echo $?
+0
+$ test $var -gt 3
+$ echo $?
+1
+$ [ $var -gt 3 ]
+$ echo $?
+1
+
+应当注意 [ $var -gt 3 ] 之间必须有空格隔开。
+
+常见的测试命令如下：
+
+[ -d DIR ]                  如果DIR存在并且是一个目录则为真
+[ -f FILE ]                 如果FILE存在并且是一个普通文件则为真
+[ -z STRING ]               如果STRING的长度为0则为真
+[ -n STRING ]               如果STRING的长度为非0则为真
+[ STRING1 = STRING2 ]       如果两个字符串相同则为真
+[ STRING1 != STRING2 ]      如果两个字符串不相同则为真
+[ ARG1 OP ARG2 ]            ARG1和ARG2应该是整数或取值为整数的变量，
+                            OP是-eq(等于)、-ne（不等于）、-lt(小于)、-le(小于等于)、-gt(大于)、-ge(大于等于)
+
+逻辑运算与或非
+
+[ ! EXPR ]              !表示逻辑反
+[ EXPR1 -a EXPR2 ]      -a表示逻辑与
+[ EXPR1 -o EXPR2 ]      -o表示逻辑或
+
+14、分支控制 if then elif else fi
+if开始
+fi结束
+then在判断语句(if或elif后有, else后没有)后，该条件要执行的语句前
+elif后跟判断语句
+else后跟要执行的语句
+
+15、分支控制 case esac
+case 开始
+esac 结束
+每个分支必须以;;结尾，不需要像C语言一样用break
+
+case variables in 
+variables 1)
+	order 1;;
+variables 2）
+	order 2;;
+variables 3)
+	order 3;;
+*)
+	no matches
+esac
+
+16、循环语句 for do done
+for file in $(ls)
+do
+	echo $file
+done
+
+17、循环语句 while do done
+while [ ... ]
+do
+	...
+done
+
+18、循环控制语句 continue break
+
+19、位置参数和特殊变量
+$0			相当于C语言main函数的argv[0]
+$1、$2...	这些称为位置参数，相当于C语言main函数的argv[1]、argv[2]...
+$#			相当于C语言main函数的argc-1，即传递的参数的个数
+$@			表示参数列表"$1" "$2" ...，可以用for循环遍历
+$*			同上
+$?			上一条命令的Exit Status
+$$			当前进程号
+
+19、shell输入输出
+
+echo [option] string
+-e 解析转义字符
+-n 不回车换行
+
+20、Shell函数
+shell函数定义中没有返回值，也没有参数列表。
+foo(){ echo "Function foo is called";}
+foo
+注意函数体的左花括号{和右边的命令之间必须有空格或换行，
+如果将最后一条命令和右花括号}写在一行，命令末尾必须有;号。
+定义foo函数时，并不执行函数体中的命令，调用foo函数时才执行函数体中的命令。
+调用foo函数没有括号()，也没有参数列表，但是可以传参，就像调用命令一样传参即可，如 foo abc 123
+
+21、Shell脚本的调试
+-n 读一遍脚本中的命令但不执行，用于检查脚本中的语法错误
+-v 一遍执行脚本，一边将执行过的脚本命令打印到标准错误输出
+-x 提供跟踪执行信息，将执行的每一条命令和结果一次打印出来
+
+使用这些调试参数的方法一：在命令行提供参数：sh -x ./script.sh
+方法二：脚本开头提供参数 #!/bin/sh -x
+方法三：在脚本中使用set命令启用或禁用参数, set -x 和 set +x 分别表示启用和禁用-x参数

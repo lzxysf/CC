@@ -1,19 +1,17 @@
 #!/bin/sh
 
-cd /
-
-echo $1
-
-$(ls $1)
-
 clean() {
-	for file in $(ls $1)
+	cd $1
+	for file in $(ls)
 	do
 		if [ -d $file ]
-		then
-			echo $file
-		else
-			echo "www"
+		then (clean $file)
+		else 
+			if [ $file = "a.out" ]
+			then rm a.out;echo $(pwd)/$file
+			fi
 		fi
 	done
 }
+
+clean /home/ubuntu/CC

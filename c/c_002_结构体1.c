@@ -34,7 +34,7 @@ void setPeople(People people)
 }
 void showpeople(People people)
 {
-  printf("name:%s",people.name);
+  printf("name:%s\r\n",people.name);
 }
 
 void setPeople2(People* people)
@@ -45,5 +45,5 @@ void setPeople2(People* people)
 }
 void showpeople2(People* people)
 {
-  printf("name:%s",people->name);
+  printf("name:%s\r\n",people->name);
 }

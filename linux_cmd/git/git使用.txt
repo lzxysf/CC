@@ -3,3 +3,8 @@
 --git remote查看所有远程仓库地址，git remote xxx 查看指定远程仓库地址
 --git remote rm origin
 --git remote add origin https://github.com/lzxysf/CC.git
+
+2.git常用命令
+git commit --amend -m "lsf"
+--amend 撤销上次的提交，合并本次的修改后再提交
+

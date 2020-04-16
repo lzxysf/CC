@@ -4,6 +4,7 @@
         "in.h": "c",
         "if.h": "c",
         "fcntl.h": "c",
-        "mysql.h": "c"
+        "mysql.h": "c",
+        "stdio.h": "c"
     }
 }

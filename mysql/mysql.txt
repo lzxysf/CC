@@ -1,0 +1,440 @@
+0.mysql安装
+查看是否安装了mysql服务 apt list --installed | grep mysql
+安装步骤：
+->安装mysql相关库
+apt-get install mysql-server
+apt-get install mysql-client
+apt-get install libmysqlclient-dev
+
+->检查是否安装成功
+netstat -tap | grep mysql
+
+->刚安装的mysql无法登陆，修改配置文件跳过密码登陆，然后修改密码
+编辑文件/etc/mysql/mysqld.conf.d/mysqld.cnf, 在末尾添加skip-grant-tables
+重启 sudo service mysql restart
+输入 mysql -uroot -p 进入mysql命令行窗口
+输入以下命令修改密码 update mysql.user set authentication_string=PASSWORD('你的密码'), plugin='mysql_native_password' where user='root';
+将文件/etc/mysql/mysqld.conf.d/mysqld.cnf中的skip-grant-tables注释掉，再次重启mysql。（即不跳过密码登陆了）
+这样就可以使用刚次设置的密码登陆mysql的root用户了
+
+->刚安装的mysql只能本地登陆，要修改配置可远程登陆
+编辑文件/etc/mysql/mysql.conf.d/mysqld.cnf，注释掉bind-address = 127.0.0.1
+输入 mysql -uroot -p 进入mysql命令行窗口，更改 "mysql" 数据库里的 "user" 表里的 "host" 项，从"localhost"改称"%",
+update mysql.user set host='%' where user='root';
+重启 sudo service mysql restart (一定要重启)
+此时就可以远程登陆mysql数据库了。
+
+->在本地电脑上使用ui或使用如下命令登陆
+mysql -h ip地址 -p端口号 -u root -p
+
+1.E-R模型
+当前物理的数据库都是按照E-R模型进行设计的
+E表示entry，实体
+R表示relationship，关系
+一个实体转换为数据库中的一个表
+关系描述两个实体之间的对应规则，包括一对一、一对多、多对多
+
+
+2.数据库三大范式
+第一范式：确保每列保持原子性
+第二范式：确保表中每列都和主键相关（如果是联合主键，每列都要和联合主键相关，而不能只是和主键的一部分相关）
+第三范式：确保表中每列都和主键直接相关，而不是间接相关，比如
+订单号 商品编号 客户编号 客户名称 客户电话 客户公司
+其中，客户名称、客户电话、客户公司是客户编号列决定的，而不是订单号直接决定的，这就是间接相关，如果要符合第三范式，应该设计如下：
+订单号 商品编号 客户编号
+客户编号 客户名称 客户电话 客户公司
+
+
+3.数据库启动
+
+->启动mysql
+sudo service mysql start
+无法启动的话，首先检查my.cnf
+还是无法启动且提示，the server quit without updating pid file (/usr/local/mysql/data/coding.ide.pid)
+解决方案：
+最可能是/usr/local/mysql/data/coding.ide.pid文件没有写的权限
+解决方法:给予权限，执行 “chown -R mysql:mysql /var/data” “chmod -R 755 /usr/local/mysql/data”,然后重新启动mysqld
+
+->停止mysql：
+sudo service mysql stop
+
+->重启mysql:
+sudo service mysql restart
+
+->mysql当前启停状态：
+sudo service mysql status(一定要加上sudo)
+
+->登陆数据库
+登陆mysql数据库：mysql -uroot -p
+回车后输入密码
+
+->远程登陆：
+mysql -h ip地址 -p端口号 -u root -p
+
+->退出mysql:
+exit或者quit
+登陆成功后输入如下命令查看效果： 
+查看版本:select version();
+显示当前时间:select now();
+注意:在语句结尾要使用分号;
+
+
+4.mysql常用的数据类型
+->文本
+char(*):最多255个字节的定长字符串，长度必须在创建时指定，长度不够空格来凑
+varchar(*)：最多255个字节的可变长度字符串，长度必须在创建时指定，长度不够不用空格凑
+text：最大长度为64K字符的变长文本
+tinytext：最大长度为255字符的变长文本
+meduimtext：最大长度为16K字符的变长文本
+longtext：最大长度为4GB字符的变长文本
+
+->整数
+tinyint：1字节。有符号值：-128 到127；无符号值：0到255
+smallint：2字节。有符号值：-32768 到32767；无符号值：0到65535
+mediumint：3字节
+int：4字节
+bigint：8字节
+
+->小数
+decimal：精确存储的小数，在内部用字符串存储，适合金额等要求精确的类型，别名：numeric
+float：4字节，单精度。会近似存储(*)，效率比decimal高  
+double：8字节，双精度。会近似存储(*)，效率比decimal高
+
+->日期时间
+date：4字节。范围：1000-01-01——9999-12-31
+time：3字节。范围：-838:59:59——838:59:59
+datetime：8字节。范围：1000-01-01 00:00:00——9999-12-31 23:59:59
+
+->二进制大数据
+tityblob：最大长度为255字节
+blob：最大长度为64KB
+mediumblob：最大长度为16MB
+longblob：最大长度为4GB
+
+
+5.数据库操作
+
+->查看所有数据库
+show databases;
+
+->创建数据库：  
+create database 数据库名 charset=utf8;
+
+->删除数据库:  
+drop database 数据库名;
+
+->切换数据库  
+use 数据库名;
+
+->查看当前选择的数据库  
+select database();
+
+
+6.表操作
+
+->查看数据库中所有表
+show tables;
+
+->创建表
+create table students(
+id int auto_increment primary key,
+sname varchar(10) not null
+);
+
+->修改表
+alter table 表名 add|change|drop 列名 类型;
+alter table students add birthday datetime;
+
+->删除表
+drop table students;
+
+->查看表结构
+desc 表名;
+
+->更改表名称
+rename table 原表名 to 新表名;
+
+->显示表的创建语句
+show create table students；
+---- mysql建表时的存储引擎有很多，最常用的是InnoDB和MyISAM，MyISAM效率较高，但是不支持事务、外键约束等特性，因此一般建议用InnoDB，新版本默认也是InnoDB
+
+
+7.数据操作
+
+->查询
+select * from 表名
+
+->增加
+全列增加：insert into 表名 values(...);
+缺省增加：insert into 表名(列1,...) values(值1,...);
+全列增加,同时插入多条数据：insert into 表名 values(...),(...),...;
+缺省增加，同时插入多条数据:insert into 表名(列1,...) values(值1,...),(值1,...),...;
+---- 主键列是自动增长的，但是在全列插入时需要占位，通常使用0，插入成功后以实际数据为准
+
+->修改
+update 表名 set 列=值,... where 条件
+
+->删除
+delete from 表名 where 条件
+
+
+8.备份与恢复
+
+->数据备份
+
+-->进入超级管理员
+sudo -s
+-->进入mysql库目录
+cd /var/lib/mysql
+-->运行mysqldump命令
+mysqldump -u root -p 数据库名 > ~/Desktop/备份文件.sql
+---- 备份文件.sql其实是一系列的sql插入语句
+
+->数据恢复
+
+-->连接mysql,创建数据库
+-->退出连接，执行如下命令
+mysql -u root -p 数据库名 < ~/Desktop/备份文件.sql
+
+
+9.查询-条件
+
+select * from 表名 where 条件;
+
+->比较运算符
+等于=
+大于>
+大于等于>=
+小于<
+小于等于<=
+不等于!=或<>
+
+->逻辑运算符
+and
+or
+not
+---- and比or的运算优先级要高
+
+->范围运算符
+in
+between...and...
+
+select * from students where id in(1,3,5)
+select * from students where id between 3 and 8
+
+->空判断
+is null
+is not null
+---- null与‘’是不同的
+
+
+10.查询-聚合
+count(*)
+max(*)
+min(*)
+sum(*)
+avg(*)
+
+
+11.查询-分组
+
+->分组语法
+select 列1,列2,聚合,... from 表名 group by 列1,列2,列3...
+
+eg.查询男女生总数
+select gender as 性别,count(*)
+from students
+group by gender;
+
+->分组后的数据筛选
+select 列1,列2,聚合,... from 表名 
+group by 列1,列2,列3... 
+having 列1,...聚合...
+
+eg.查询男生总数
+select gender as 性别,count(*)
+from students
+group by gender
+having gender=1;
+
+->对比where与having
+where是对from后面指定的表进行数据筛选，属于对原始数据的筛选
+having是对group by的结果进行筛选
+
+
+12.查询-排序
+->语法
+select * from 表名
+order by 列1 asc|desc,列2 asc|desc,...
+
+
+13.查询-分页
+
+->语法
+select * from 表名
+limit start,count
+
+从start开始，获取count条数据
+start索引从0开始
+
+->分页
+每页显示m条数据，当前显示第n页
+select * from students
+where isdelete=0
+limit (n-1)*m,m
+
+
+14.查询-总结
+select disinct 列1,列2,...
+from 表名
+where ...
+group by ... having ...
+order by ...
+limit start,count
+
+---- distinct是消除重复，用distinct修复的属性在查询结果中只会出现一行
+
+
+15.外键
+
+--------------------------
+scores表字段
+id score stuid subid
+
+students表字段
+id title gender
+
+subjects表字段
+id name
+---------------------------
+
+->为scores表的stuid添加外键
+alter table scores add constraint stu_sco foreign key(stuid) references students(id);
+此后对scores表插入或修改数据时，如果stuid的值在students表中不存在则会报错
+
+->在创建scores表时可以直接创建约束
+create table scores(
+id int primary key auto_increment,
+stuid int,
+subid int,
+score decimal(5,2),
+foreign key(stuid) references students(id),
+foreign key(subid) references subjects(id)
+);
+
+->外键的级联操作
+在删除students表的数据时，如果这个id值在scores中已经存在，则会抛异常
+可以创建表时指定级联操作，也可以在创建表后再修改外键的级联操作
+语法示例
+alter table scores add constraint stu_sco foreign key(stuid) references students(id) on delete cascade;
+
+级联操作的类型包括：
+restrict（限制）：默认值，抛异常
+cascade（级联）：如果主表的记录删掉，则从表中相关联的记录都将被删除
+set null：将外键设置为空
+no action：什么都不做
+
+
+16.连接
+
+当查询结果来源于多张表时，需要利用连接查询join
+
+->关键：找到表间的关系，当前的关系是
+students表的id--scores表的stuid
+subjects表的id--scores表的stuid
+
+->示例
+select students.name,subjects.title,scores.score
+from scores
+inner join students on scores.stuid=students.id
+inner join subjects on scores.subid=subjects.id;
+
+->示例2
+查询每个男生的姓名、科目总分
+select students.name,sum(scores.score)
+from scores
+inner join students on students.id=scores.stuid
+where students.gender=1
+group by students.name
+
+->分类
+内连接(inner join)
+外连接：左连接(left join)、右连接(right join)
+
+表A inner join 表B：表A与表B匹配的行会出现在结果中
+表A left join 表B：表A与表B匹配的行会出现在结果中，外加表A中独有的数据，未对应的数据采用null填充
+表A right join 表B：表A与表B匹配的行会出现在结果中，外加表B中独有的数据，未对应的数据采用null填充
+
+在查询或条件中推荐使用“表名.列名”的语法
+如果多个表中列名不重复可以省略“表名.”部分
+如果表的名称太长，可以在表名后面使用' as 简写名'或' 简写名'，为表起个临时的简写名称
+
+
+17.自关联
+
+->自关联查询其实等同于连接查询，需要两张表，只不过它的左表（父表）和右表（子表）都是自己。
+做自关联查询的时候，是自己和自己连接，分别给父表和子表取两个不同的别名，然后附上连接条件。
+
+->使用于树状结构的分类，如省-市-县-乡-村，淘宝产品分类（数码产品-手机/笔记本-戴尔/惠普），
+如果每一种具体的分类都存放在一个单独的数据表，这些分类就会达到一个很深的层次，呈现一种树状结构，
+因此采用自关联的方式将其存在一个表中。
+
+->示例
+areas数据表设计示例
+	id		title		pid
+	2    	河北省   	null
+	21		石家庄市 	2
+	22    	唐山市  	2
+
+eg.查询河北省的所有城市
+select city.* from areas as city
+inner join areas as prov on city.pid=prov.id
+where city.title='河北省'
+
+eg.查询石家庄市下属的区县和乡镇
+select county.*,town.* from areas as county
+inner join areas as city on city.id = county.pid
+left join areas as town on town.pid = county.id
+where city.title='石家庄市'
+
+
+18.子查询
+
+查询支持嵌套使用
+->查询每个学生的语文、数学、英语的成绩
+select name,
+(select score from scores as sco inner join subjects as sub on sco.subid=sub.id where sub.title='语文' and stuid=stu.id) as 语文,
+(select score from scores as sco inner join subjects as sub on sco.subid=sub.id where sub.title='数学' and stuid=stu.id) as 数学,
+(select score from scores as sco inner join subjects as sub on sco.subid=sub.id where sub.title='英语' and stuid=stu.id) as 英语,
+from students as stu
+
+
+19.视图
+
+对于复杂的查询，在多次使用后，维护是一件麻烦的事情
+解决-定义视图
+视图本质就是对查询的一个封装
+
+->创建视图
+create view stuscore as
+select students.*,scores.score from scores
+inner join students on scores.stuid=students.id;
+
+->视图的作用就是查询
+select * from stuscore
+
+
+20.事务
+
+->事务的四大特性
+原子性：事务中的全部操作在数据库中是不可分割的，要么全部完成，要么均不执行
+一致性
+隔离性
+持久性
+
+->要使用事务，表的类型必须是innodb
+
+->事务语句
+开启begin;
+提交commit;
+回滚callback;

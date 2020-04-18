@@ -1,0 +1,68 @@
+1.hiredis组件
+hiredis是redis官方推荐的基于C接口的客户端组件 
+在redis的源码包的deps/hiredis下就有源码,也可以另行下载hiredis 
+安装方法,进入deps/hiredis目录,执行如下命令
+make
+make install
+mkdir /usr/lib/hiredis
+cp libhiredis.so /usr/lib/hiredis //将动态连接库libhiredis.so拷贝到/usr/lib/hiredis
+mkdir /usr/include/hiredis
+cp hiredis.h /usr/include/hiredis //头文件包含#include<hiredis/hiredis.h>
+执行sudo ldconfig
+每次安装了新的动态链接库都需要运行ldconfig，这样才可以让动态链接库为系统共享
+
+2.主要接口
+函数原型：redisContext *redisConnect(const char *ip, int port) 
+说明：该函数用来连接redis数据库，参数为数据库的ip地址和端口
+该函数返回一个结构体redisContext
+
+函数原型：void *redisCommand(redisContext *c, const char *format, …)
+说明：该函数执行redis命令,当然也包括由lua脚本组成的命令
+
+函数原型void freeReplyObject(void *reply); 
+说明：释放redisCommand执行后返回的redisReply所占用的内存
+对于嵌套对象（比如数组）要注意，并不需要嵌套进行释放，这样是有害的会造成内存破坏
+
+函数原型：void redisFree(redisContext *c); 
+说明：释放redisConnect()所产生的连接
+
+3.rediesReply讲解
+redisCommand会返回redisReply结构体指针，redisReply结构体中包含了执行结果，如下：
+/* This is the reply object returned by redisCommand() */
+typedef struct redisReply {
+    int type; /* REDIS_REPLY_* */
+    long long integer; /* The integer when type is REDIS_REPLY_INTEGER */
+    int len; /* Length of string */
+    char *str; /* Used for both REDIS_REPLY_ERROR and REDIS_REPLY_STRING */ /*REDIS_REPLY_STATUS时也会携带str*/
+    size_t elements; /* number of elements, for REDIS_REPLY_ARRAY */
+    struct redisReply **element; /* elements vector for REDIS_REPLY_ARRAY */
+} redisReply;
+
+redisReply->type对应的类型有如下几种
+#define REDIS_REPLY_STRING 1
+#define REDIS_REPLY_ARRAY 2
+#define REDIS_REPLY_INTEGER 3
+#define REDIS_REPLY_NIL 4
+#define REDIS_REPLY_STATUS 5
+#define REDIS_REPLY_ERROR 6
+
+REDIS_REPLY_STATUS
+返回执行结果为状态的命令。比如set命令的返回值的类型是REDIS_REPLY_STATUS
+然后只有当返回信息是"OK"时，才表示该命令执行成功
+可以通过reply->str得到文字信息，通过reply->len得到信息长度
+
+REDIS_REPLY_ERROR
+返回错误。错误信息可以通过reply->str得到文字信息，通过reply->len得到信息长度
+
+REDIS_REPLY_NIL
+返回nil对象，说明不存在要访问的数据
+
+REDIS_REPLY_STRING
+返回字符串标识。可以通过reply->str得到具体值，通过reply->len得到信息长度
+
+REDIS_REPLY_ARRAY
+返回数据集标识。数据集中元素的数目可以通过reply->elements获得，每个元素是个redisReply对象
+元素值可以通过reply->element[..index..].*形式获得，用在获取多个数据结果的操作
+
+REDIS_REPLY_INTEGER
+返回数值类型。例如incr等的返回值的类型为REDIS_REPLY_INTEGER，通过reply->integer获得数值，注意它是一个long long类型的数据

@@ -5,6 +5,7 @@
         "if.h": "c",
         "fcntl.h": "c",
         "mysql.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "hiredis.h": "c"
     }
 }

@@ -1,3 +1,8 @@
+/*
+c语言与mysql数据库连接使用了之前安装的libmysqlclient-dev库
+具体的so库和头文件的路径在makefile脚本中有描述
+*/
+
 #include <stdio.h>
 #include "mysql.h"
 

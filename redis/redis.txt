@@ -1,0 +1,305 @@
+1.安装
+->官网下载
+https://redis.io
+->解压
+tar -xvzf redis-3.2.5.tar.gz
+->移动
+sudo mv redis-3.2.5 /usr/local/redis
+->生成
+cd /usr/local/redis
+sudo make
+->测试
+sudo make test
+可能有错误，可以忽略
+->安装
+sudo make install
+出现
+INSTALL install
+INSTALL install
+INSTALL install
+INSTALL install
+INSTALL install
+说明安装成功了
+
+
+2.运行
+命令都在redis-5.0.5/src
+->启动服务器
+redis-server
+->启动客户端
+redis-cli
+redis-cli -h host -p port -a password
+-h 服务器地址 -p 端口号,默认6379 -a 密码
+->关闭客户端
+exit或quit
+->运行命令
+ping
+set ‘a’ '123'
+
+
+3.基本配置
+
+->配置文件在/usr/local/redis目录下，文件redis.conf为配置文件
+
+->绑定地址
+bind 127.0.0.1
+如果需要远程访问，可将此行注释
+
+->端口
+port 6379
+
+->是否以守护进程运行
+daemonize no|yes
+如果以守护进程运行，则不会在命令行阻塞，类似于服务
+如果以非守护进程运行，则会在命令行阻塞，无法使用
+推荐改为yes,以守护进程运行
+
+->数据文件
+dbfilename dump.rdb
+
+->数据文件存储路径
+dir ./
+默认是当前目录，推荐改为
+dir /var/lib/redis
+并且添加写权限 sudo chmod a+w /var/lib/redis
+
+->设置为需要密码登录（默认不需要密码）
+将 requirepass 前面的#去掉
+设置 requirepass 216857 即是将密码设置为216857
+然后重启redis服务器
+
+->使用配置文件方式启动redis服务端
+sudo /usr/local/redis-5.0.5/src/redis-server /usr/local/redis-5.0.5/redis.conf
+如果直接redis-server启动是不会加载配置文件的
+
+->启动redis客户端
+redis-cli会启动redis客户端命令行
+如果配置为requirepass，需要redis-cli -a 密码
+此时如果直接redis-cli其实也可以进入命令行，但是执行命令时是无权限的，此时在命令行中执行 auth 密码 就可以正常执行命令了
+
+->关闭redis-server
+redis-cli -a 密码 shutdown （在requirepass打开时一定有密码否则会提示无权限）
+或者在客户端命令行中执行shutdown
+都会关闭redis-server
+这是正常关闭redis-server方法，如果kill命令强制关闭，redis-server再次启动后可能会出问题
+
+
+4.数据操作
+redis是key-value的数据，所以每一个数据都是一个键值对
+键的类型是字符串
+值的类型分为5种：
+字符串：string
+哈希:hash
+列表：list
+集合：set
+有序集合：zset
+数据操作的全部命令，可以查看http://redis.cn/commands.html
+
+
+5.数据操作-string
+string是redis最基本的类型
+最大能存储512M数据
+string类型是二进制安全的，即可以为任何数据，比如数字、图片、序列号对象等
+
+->设置
+-->设置键值
+set key value
+-->设置键值及过期时间，以秒为单位
+setex key seconds value
+-->设置多个键值
+mset key value [key value ...]
+
+->获取
+-->根据键获取值，如果不存在此键则返回nil
+get key
+-->根据多个键获取多个值
+mget key [key ...]
+
+->运算
+要求：值是数字
+-->将key对应的value加1
+incr key
+-->将key对应value加整数
+incrby key increment
+-->将key对应的value减1
+decr key
+-->将key对应的value减整数
+decrby key decrement
+
+->其它
+-->追加值
+append key value
+-->获取值长度
+strlen key
+
+
+6.数据操作-键命令
+
+->查找键，参数支持正则
+keys pattern
+查找所有键是keys *
+
+->判断键是否存在，如果存在返回1，不存在返回0
+exists key [key ...]
+
+->查看键对应的value的类型
+type key
+
+->删除键对应的值
+del key [key ...]
+
+->设置过期时间
+expire key seconds
+
+->查看有效时间
+ttl key
+
+
+7.数据操作-hash
+hash用于存储对象，对象的格式为键值对
+
+->设置
+-->设置单个属性
+hset key field value
+-->设置多个属性
+hmset key filed value [filed value ...]
+
+->获取
+-->获取一个属性的值
+hget key field
+-->获取多个属性的值
+hmget key filed [filed ...]
+-->获取所有属性的值
+hgetall key
+-->获取所有的属性
+hkeys key
+-->获取所有值
+hvals key
+-->返回包含属性的个数
+hlen key
+
+->其它
+-->判断属性是否存在
+hexists key filed
+-->删除属性及值
+hdel key filed [field ...]
+-->返回值的字符串长度
+hstrlen key filed
+
+
+8.数据操作-list
+日常使用过程中list可以作为消息队列使用。
+->设置
+-->在头部插入数据
+LPUSH key value [value ...]
+-->在尾部插入数据
+RPUSH key value [value ...]
+-->在一个元素前|后插入数据
+linsert key before|after pivot value
+-->设置指定索引的元素值
+lset key index value
+
+->获取
+-->移除并返回存于key的list的第一个元素
+lpop key
+-->移除并返回存于key的list的最后一个元素
+rpop key
+-->返回存储在key的列表里指定范围内的元素
+lrange key start end
+
+->其它
+-->裁剪列表
+ltrim key start end
+-->返回存储在key里的list的长度
+llen key
+-->返回列表里索引对应的元素
+lindex key index
+
+
+9.数据操作-set
+无序集合
+元素为string类型
+元素具有唯一性，不重复
+
+->设置
+sadd key member [member ...]
+->获取
+-->返回key集合所有的元素
+smembers key
+-->返回集合元素个数
+scard key
+->其它
+-->求多个集合的交集
+sinter key [key ...]
+-->求某集合与其它集合的差集
+sdiff key [key ...]
+-->求多个集合的合集
+sunion key [key ...]
+-->判断元素是否在集合中
+sismember key member
+
+
+10.数据操作-zset
+sorted set,有序集合
+元素为string类型
+元素具有唯一性，不重复
+每个元素都会关联一个double类型的score，表示权重，通过权重将元素从小到大排列
+元素的score可以相同
+->设置
+zadd key score member [score member ...]
+->获取
+-->返回指定范围内的元素
+zrange key start stop
+-->返回元素个数
+zcard key
+-->返回有序集key中，score值在min和max之间的成员数量
+zcount key min max
+-->返回有序集key中，成员member的score值
+zscore key member
+
+
+11.发布订阅
+>>>发布者不是计划发送消息给特定的接收者（订阅者），而是发布的消息分到不同的频道，不需要知道什么样的订阅者订阅
+>>>订阅者对一个或多个频道感兴趣，只需要接收感兴趣的信息，不需要知道什么样的发布者发布的
+>>>发布者和订阅者的解耦合可以带来更大的扩展性和更加动态的网络拓扑
+>>>客户端发到频道的消息，将会被推送到所有订阅此频道的客户端
+>>>客户端不需要主动去获取消息，只需要订阅频道，这个频道的内容就会被推送过来
+
+->命令
+-->订阅
+subscribe 频道名称 [频道名称]
+eg.订阅频道room1
+subscribe room1
+此时命令行返回如下
+1) "subscribe"			//订阅频道
+2) "room1"				//频道名称
+3) (integer) 1			//订阅频道数量
+并阻塞
+
+-->取消订阅
+unsubscribe 频道名称 [频道名称]
+
+-->发布
+publish 频道名称 消息
+eg.向频道room1发布消息
+publish room1 helloeveryone
+此时订阅room1的用户会返回如下
+1) "message"
+2) "room1"				//来源频道名称
+3) "helloeveryone"		//消息的内容
+
+
+12.主从配置
+>>>一个master可以拥有多个slave,一个slave又可以拥有多个slave，如此形成强大的多级服务器集群架构
+
+eg.将ip为192.168.1.10的机器作为主服务器，将ip为192.168.1.11的机器作为从服务器
+设置主服务器配置
+bind 192.168.1.10
+设置从服务器配置(在slaveof后面写主机ip 主机端口，而且主机端口必须写)
+bind 192.168.1.11
+slaveof 192.168.1.10 6379
+
+然后在主服务器执行插入命令
+set hello world
+在从服务器上读数据
+get hello

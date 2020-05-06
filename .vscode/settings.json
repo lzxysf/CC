@@ -3,6 +3,14 @@
         "stdlib.h": "c",
         "in.h": "c",
         "if.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "mysql.h": "c",
+        "stdio.h": "c",
+        "hiredis.h": "c",
+        "exosip2.h": "c",
+        "osip.h": "c",
+        "osip_port.h": "c",
+        "istream": "c",
+        "ostream": "c"
     }
 }

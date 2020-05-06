@@ -24,8 +24,8 @@ gcc main.c -L . -l math -o main.out
 a.使用如下命令编译add.c和multi.c
 命令$: gcc -c add.c multi.c
 生成add.o和multi.o
-
 -c表示生成二进制文件但是不链接
+
 b.使用如下命令生成静态库
 命令$: ar -rc libmath.a add.o multi.o
 这样就生成了静态库libmath.a

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>屏幕预览</title>
+    </head>
+    <body>
+        <video id='video' autoplay width='400', height="300"></video>
+        <script>
+            window.onload = initApp;
+            async function initApp()
+            {
+                document.getElementById('video').srcObject = await navigator.mediaDevices.getDisplayMedia();
+            }
+        </script>
+    </body>
+</html>

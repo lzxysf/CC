@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>摄像头测试和拍照</title>
+    </head>
+    <body>
+        <video id='video' autoplay width='400', height="300"></video>
+        <button id='button' onclick="takephoto()">拍照</button>
+        <canvas id='canvas' width = '400', height="300"></canvas>
+        <script>
+            var context2D;
+            window.onload = initApp;
+            async function initApp()
+            {
+                document.getElementById('video').srcObject = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+                context2D = document.getElementById('canvas').getContext('2d');
+            }
+            function takephoto()
+            {
+                context2D.drawImage(document.getElementById('video'), 0, 0, 400, 300);
+            }
+        </script>
+    </body>
+</html>

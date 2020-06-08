@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>摄像头和麦克风</title>
+</head>
+
+<body>
+    <video id='video' autoplay width='400' , height="300"></video>
+    <script>
+        window.onload = initApp;
+        async function initApp() {
+            document.getElementById('video').srcObject = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 640,
+                    height: 480,
+                    frameRate: 30,
+                    facingMode: 'enviroment'
+                },
+                audio: {
+                    noiseSuppression: true,
+                    echoCancellation: true
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

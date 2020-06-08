@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <video autoplay id="preview_video" style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <div>
+        <button id='start_camera'>start camera</button>
+        <button id='start_record'>start record</button>
+        <button id="play">play</button>
+    </div>
+    <script>
+        var preview_video = document.getElementById('preview_video');
+        var play_video = document.getElementById('play_video');
+        var start_camera = document.getElementById('start_camera');
+        var start_record = document.getElementById('start_record');
+        var play = document.getElementById('play');
+
+        start_camera.addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
+            }).then(function(stream) {
+                preview_video.srcObject = stream;
+                window.stream = stream;
+            });
+        });
+
+        start_record.addEventListener('click', function() {
+            var options = {
+                mimeType: 'video/webm;codecs=h264'
+            }
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                alert("不支持的媒体类型");
+            }
+
+            var mediaRecorder = new MediaRecorder(window.stream, options);
+
+            mediaRecorder.ondataavailable = dataAvailableHandler;
+
+            mediaRecorder.start(5000);
+        });
+
+        function dataAvailableHandler(event) {
+            console.log(event)
+        }
+    </script>
+</body>
+
+</html>

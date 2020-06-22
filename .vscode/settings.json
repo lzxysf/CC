@@ -12,5 +12,6 @@
         "osip_port.h": "c",
         "istream": "c",
         "ostream": "c"
-    }
+    },
+    "files.autoSave": "afterDelay"
 }

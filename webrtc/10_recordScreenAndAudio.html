@@ -1,0 +1,84 @@
+<!-- 录制屏幕和麦克声音
+    1.使用getUserMedia获取麦克风音频流stream
+    2.使用getDisplayMedia获取屏幕视频流screen_stream
+    3.提取屏幕视频流中的视频轨，添加到麦克风音频流stream中
+    4.将stream赋值给video控件进行播放
+    5.将stream传递给MediaRecorder进行录制 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="js/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+    <video autoplay id="preview_video" style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <video autoplay id="playback_video" style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <div style="margin-top: 10px;">
+        <button id="record" onclick="record()">record</button>
+        <button id="play" onclick="play()">play</button>
+    </div>
+    <script>
+        let mediaRecorder = null;
+        let buffer = [];
+
+        window.onload = initAPP;
+        async function initAPP() {
+            let stream = await navigator.mediaDevices.getUserMedia({video:false, audio:true});
+            let screen_stream = await navigator.mediaDevices.getDisplayMedia();
+            screen_stream.getVideoTracks().forEach(track => {
+                if(track.kind == "video")
+                {
+                    console.log(track)
+                    stream.addTrack(track);
+                }
+            });
+            $('#preview_video')[0].srcObject = stream;
+            window.stream = stream;
+        }
+
+        function record() {
+            if($('#record')[0].innerText == "record") {
+                var options = {
+                    audioBitsPerSecond : 128000,
+                    videoBitsPerSecond : 2500000,
+                    mimeType: 'video/webm;codecs=h264'
+                }
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    alert("不支持的媒体类型");
+                    return;
+                }
+                buffer = [];
+                mediaRecorder = new MediaRecorder(window.stream, options);
+                mediaRecorder.ondataavailable = dataAvailableHandler;
+                mediaRecorder.start(5000);
+                console.log(mediaRecorder.state);
+                $('#record')[0].innerText = "stop";
+            } else if($('#record')[0].innerText == "stop") {
+                mediaRecorder.stop();
+                console.log(mediaRecorder.state);
+                $('#record')[0].innerText = "record";
+            }
+        }
+
+        function dataAvailableHandler(event) {
+            console.log(event);
+            if(event && event.data && event.data.size > 0) {
+                buffer.push(event.data);
+            }
+        }
+
+        function play() {
+            if(buffer == null || buffer.length == 0) {
+                alert("录制数据为空");
+                return;
+            }
+            var blob = new Blob(buffer, {type:'video/webm'});
+            $('#playback_video')[0].src = window.URL.createObjectURL(blob);
+            $('#playback_video')[0].srcObject = null;
+        }
+    </script>
+</body>
+</html>

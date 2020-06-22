@@ -9,17 +9,23 @@
 
 <body>
     <video autoplay id="preview_video" style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <video autoplay id="play_video" style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    
     <div>
         <button id='start_camera'>start camera</button>
         <button id='start_record'>start record</button>
         <button id="play">play</button>
+        <button id="download" onclick="download()">download</button>
     </div>
     <script>
         var preview_video = document.getElementById('preview_video');
         var play_video = document.getElementById('play_video');
         var start_camera = document.getElementById('start_camera');
-        var start_record = document.getElementById('start_record');
+        var startstop_record = document.getElementById('start_record');
         var play = document.getElementById('play');
+
+        var buffer = [];
+        var mediaRecorder = null;
 
         start_camera.addEventListener('click', function() {
             navigator.mediaDevices.getUserMedia({
@@ -31,23 +37,73 @@
             });
         });
 
-        start_record.addEventListener('click', function() {
-            var options = {
-                mimeType: 'video/webm;codecs=h264'
+        startstop_record.addEventListener('click', function() {
+            if(startstop_record.innerText == "start record") {
+                // 创建一个音频比特率为128kbps,视频比特率为2.5Mbps的媒体录制器
+                //如果视频和/或音频的比特率没有指定, 视频默认采用的比特率是2.5Mbps, 但音频的默认比特率并不固定, 音频的默认比特率根据采样率和轨道数自适应
+                var options = {
+                    audioBitsPerSecond : 128000,
+                    videoBitsPerSecond : 2500000,
+                    mimeType: 'video/webm;codecs=h264'
+                }
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    alert("不支持的媒体类型");
+                    return;
+                }
+                buffer = [];
+                mediaRecorder = new MediaRecorder(window.stream, options);
+                mediaRecorder.ondataavailable = dataAvailableHandler;
+                mediaRecorder.start(5000);
+                console.log(mediaRecorder.state); //recording 表示已经在录制
+                startstop_record.innerText = "stop record";
+            } else if(startstop_record.innerText == "stop record") {
+                mediaRecorder.stop();
+                console.log(mediaRecorder.state); //inactive 表示停止录制了
+                startstop_record.innerText = "start record";
             }
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                alert("不支持的媒体类型");
-            }
-
-            var mediaRecorder = new MediaRecorder(window.stream, options);
-
-            mediaRecorder.ondataavailable = dataAvailableHandler;
-
-            mediaRecorder.start(5000);
         });
 
         function dataAvailableHandler(event) {
-            console.log(event)
+            console.log(event);
+            if(event && event.data && event.data.size > 0) {
+                buffer.push(event.data);
+            }
+        }
+
+        play.addEventListener('click', function() {
+            if(play.innerText == "play") {
+                var blob = new Blob(buffer, {type: 'video/webm'});
+                play_video.src = window.URL.createObjectURL(blob);
+                play_video.srcObject = null;
+                play_video.controls = true;
+                play_video.play();
+                play.innerText = "stop";
+            } else if(play.innerText == "stop") {
+                play_video.pause();
+                play.innerText = "play";
+            }
+        });
+
+        //video标签播放结束触发回调
+        play_video.onended = function() {
+            console.log("播放结束");
+            play_video.src = null;
+            play.innerText = "play";
+        };
+
+        function download() {
+            if(buffer == null || buffer.length == 0)
+            {
+                alert("录制数据为空");
+                return;
+            }
+            var blob = new Blob(buffer, {type:"video/webm"});
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.style.display = 'none';
+            a.download = "aaa.webm"
+            a.click();
         }
     </script>
 </body>

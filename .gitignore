@@ -2,4 +2,4 @@ a.out
 opens/libevent/libevent-2.1.11-stable
 opens/exosip
 .vscode
-nodejs/node_modules
+node_modules

@@ -1,0 +1,30 @@
+<!-- 实现右边的video标签的内容和左边完全一致（暂停快进等都一致）
+    通过video标签的captureStream方法获取左边video标签的媒体流并赋值给右边的video标签 -->
+
+<!-- 不仅video标签有captureStream方法，canvas标签也有captureStream方法，因此还可以通过captureStream获取canvas标签的媒体流 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <video id="left_video" controls loop style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);">
+        <source src="../01_device/assets/raw/video.mp4"/>
+        <source src="../01_device/assets/raw/video.ogv"/>
+    </video>
+    <video id="right_video" autoplay playsinline style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+
+    <script>
+        let left_video = document.querySelector('video#left_video');
+        let right_video = document.querySelector('video#right_video');
+        left_video.addEventListener('canplay', function(){
+            let stream = left_video.captureStream();
+            right_video.srcObject = stream;
+        });
+    </script>
+
+</body>
+</html>

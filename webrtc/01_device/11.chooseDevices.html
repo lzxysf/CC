@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <video autoplay playsinline id="preview_video" style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <div>
+        <label for="audioinput">音频输入</label>
+        <select id="audioinput"></select>
+
+        <label for="audiooutput">音频输出</label>
+        <select id="audiooutput"></select>
+
+        <label for="videoinput">视频输入</label>
+        <select id="videoinput"></select>
+
+        <button id="start" onclick="start()">start</button>
+    </div>
+    <script>
+        let audioinputselector = document.querySelector('#audioinput')
+        let audiooutputselector = document.querySelector('#audiooutput')
+        let videoinputselector = document.querySelector('#videoinput')
+        let preview_video = document.querySelector('#preview_video')
+        let btn_start = document.querySelector('#start')
+
+        window.onload = init;
+        function init() {
+            navigator.mediaDevices.enumerateDevices().then(function(devicesinfo){
+                devicesinfo.forEach(function(device){
+                    console.log(device);
+                    switch(device.kind){
+                        case "audioinput":
+                            audioinputselector.options.add(new Option(device.label, device.deviceId))
+                            break;
+                        case "audiooutput":
+                            audiooutputselector.options.add(new Option(device.label, device.deviceId))
+                            break;
+                        case "videoinput":
+                            videoinputselector.options.add(new Option(device.label, device.deviceId))
+                            break;
+                    }
+                });
+            });
+        }
+
+        function start() {
+            let audioSource = audioinputselector.value;
+            let videoSource = videoinputselector.value;
+            navigator.mediaDevices.getUserMedia({audio:{deviceId: audioSource}, video:{deviceId: videoSource}}).then(function(stream){
+                preview_video.srcObject = stream;
+            });
+        }
+    </script>
+</body>
+</html>

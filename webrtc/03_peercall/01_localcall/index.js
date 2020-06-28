@@ -5,6 +5,8 @@ let remote_video = document.querySelector('#playback_video')
 let btn_start = document.querySelector('#start')
 let btn_call = document.querySelector('#call')
 let btn_hangup = document.querySelector('#hangup')
+let local_sdp = document.querySelector('textarea#local_sdp')
+let remote_sdp = document.querySelector('textarea#remote_sdp')
 
 let localstream;
 var pc1;
@@ -34,6 +36,7 @@ function call() {
     }
 
     localstream.getTracks().forEach((track)=>{
+        // pc1.addTrack(track, localstream);
         pc1.addTrack(track);
     });
     pc2.ontrack = (ev)=>{
@@ -49,12 +52,14 @@ function call() {
 
     pc1.createOffer({offerToReceiveAudio:0, offerToReceiveVideo:1}).then((desc)=> {
         pc1.setLocalDescription(desc);
+        local_sdp.value = desc.sdp;
 
         pc2.setRemoteDescription(desc);
         pc2.createAnswer().then((desc)=> {
             pc2.setLocalDescription(desc);
             
             pc1.setRemoteDescription(desc);
+            remote_sdp.value = desc.sdp;
         });
     });
 }

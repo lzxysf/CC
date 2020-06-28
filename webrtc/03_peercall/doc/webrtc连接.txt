@@ -3,7 +3,9 @@
 可以在html文件中引入adapter.js库
 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 
-3.webrtc的通信流程见“webrtc通信流程图”
+3.本例中没有signal服务器和stun服务器，是直接在本地中转，一个界面上同时显示本地画面和远端画面
+
+4.webrtc的通信流程见“webrtc通信流程图”
 webrtc并不提供Stun服务器和Signal服务器，服务器端需要自己实现。
 Stun服务器可以用google提供的实现stun协议的测试服务器（stun:stun.l.google.com:19302）,
 Signal服务器则完全需要自己实现了，它需要在ClientA和ClientB之间传送彼此的SDP信息和candidate信息，
@@ -26,3 +28,10 @@ ClientA通过RTCPeerConnection的SetLocalDescription方法将该SDP对象保存�
 -->当ClientA收集到Candidate信息后，RTCPeerConnection会通过OnIceCandidate接口给ClientA发送通知，ClientA将收到的Candidate信息通过Signal服务器发送给ClientB，ClientB通过RTCPeerConnection的AddIceCandidate方法保存起来。同样的操作ClientB对ClientA再来一次。
 
 -->这样ClientA和ClientB就已经建立了音视频传输的P2P通道，ClientB接收到ClientA传送过来的音视频流，会通过RTCPeerConnection的ontrack回调接口返回一个标识ClientA端音视频流的MediaStream对象，在ClientB端渲染出来即可。同样操作也适应ClientB到ClientA的音视频流的传输。
+
+5.注意
+pc1.addTrack(track) 是添加媒体轨，此时pc2.ontrack中获得的也是媒体轨，远端要呈现画面需要每次新建一个MediaStream，
+将媒体轨添加进MediaStream，然后将MediaStream赋值给video进行播放
+
+pc2.addTrack(track, localStream) 会将媒体轨和流绑定，此时pc2.ontrack中可以直接获得媒体流，直接赋值给video进行播放
+

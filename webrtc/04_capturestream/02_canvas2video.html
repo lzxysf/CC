@@ -1,0 +1,67 @@
+<!-- 本例改造了01_device/08_usingCameraAndScreen.html，获取绘制在canvas上的复合视频流，然后使用video标签播放出来 -->
+
+<!-- canvas上的复合视频是屏幕视频流和摄像头视频流混合绘制生成的；通过canvas的captureStream获取的是一个视频流。
+这个视频流可以传递给peer用于远程传输或者传递给MediaRecorder用于录制。 -->
+
+<!-- 由于canvas的画面是随着时间一点点绘制上去的，因此在开始调用canvas.captureStream获取的数据流也只包含一帧数据，必须在每次绘制canvas的同时使用
+stream.getVideoTracks()[0].requestFrame()将canvas现在的状态当作一帧添加到stream流中。
+requestFrame()起的作用就是捕获一帧到stream流中。
+另外也是由于canvas的画面是随着时间一点点绘制上去的，因此canvas.captureStream(fps)中的fps应当传入0，防止自动捕获
+而只在调用requestFrame()时手动捕获一帧 -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>屏幕预览</title>
+</head>
+
+<body>
+    <canvas id='canvas' width="800" , height="600"></canvas>
+    <video id="right_video" autoplay playsinline style="background: #222; width: 800px; height: 600px">
+    <script>
+        const SCREENWIDTH = 800;
+        const SCREENHEIGHT = 600;
+        const CAMERAWIDTH = 200;
+        const CAMERAHEIGHT = 150;
+        var context2d;
+        var screenVideo, cameraVideo;
+        var canvas = document.querySelector('canvas#canvas')
+        var right_video = document.querySelector('video#right_video');
+        let stream = null;
+
+        window.onload = initApp;
+        async function initApp() {
+            screenVideo = document.createElement('video');
+            screenVideo.autoplay = true;
+            var screenStream = await navigator.mediaDevices.getDisplayMedia();
+            screenVideo.srcObject = screenStream;
+
+            cameraVideo = document.createElement('video');
+            cameraVideo.autoplay = true;
+            var cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            cameraVideo.srcObject = cameraStream;
+
+            context2d = canvas.getContext('2d');
+            window.requestAnimationFrame(render);
+
+            stream = canvas.captureStream(0);
+            right_video.srcObject = stream;
+        }
+
+        function render() {
+            console.log('update');
+            context2d.drawImage(screenVideo, 0, 0, SCREENWIDTH, SCREENHEIGHT);
+            context2d.drawImage(cameraVideo, SCREENWIDTH - CAMERAWIDTH, SCREENHEIGHT - CAMERAHEIGHT, CAMERAWIDTH, CAMERAHEIGHT);
+            window.requestAnimationFrame(render);
+            stream.getVideoTracks()[0].requestFrame();
+        }
+
+    </script>
+</body>
+
+</html>

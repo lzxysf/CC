@@ -18,7 +18,29 @@
         <button id='call' onclick="call()">call</button>
         <button id='hangup' onclick="hangup()">hangup</button>
     </div>
+    <div style="margin: 10px;">
+        <select id="bandwidthselector">
+            <option>unlimited</option>
+            <option>2000</option>
+            <option>1000</option>
+            <option>500</option>
+            <option>250</option>
+            <option>125</option>
+        </select>
+    </div>
+    <div>
+        <div class="graph-container" id="bitrateGraph" style="margin:3px; float: left;">
+            <div>Bitrate</div>
+            <canvas id="bitrateCanvas" style="width: 750px;"></canvas>
+        </div>
+        <div class="graph-container" id="packetGraph" style="margin:3px; float: left;">
+            <div>Packets sent per second</div>
+            <canvas id="packetCanvas" style="width: 750px;"></canvas>
+        </div>
+    </div>
     <script src="../js/adapter-latest.js"></script>
+    <script src="../js/socket.io.js"></script>
+    <script src="../js/graph.js"></script>
     <script src="./index.js"></script>
 </body>
 

@@ -1,3 +1,6 @@
+<!-- 使用deviceId指定音频源设备或视频源设备
+采集到的本地流为stream， stream.getVideoTracks()[0].label可以获取捕获这个轨媒体数据的设备名称 -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,12 +22,18 @@
 
         <button id="start" onclick="start()">start</button>
     </div>
+    <div style="margin: 8px;"id="deviceinfo">
+        <span id="videodeviceinfo"></span><br>
+        <span id="audiodeviceinfo"></span>
+    </div>
     <script>
         let audioinputselector = document.querySelector('#audioinput')
         let audiooutputselector = document.querySelector('#audiooutput')
         let videoinputselector = document.querySelector('#videoinput')
         let preview_video = document.querySelector('#preview_video')
         let btn_start = document.querySelector('#start')
+        let audiodeviceinfo = document.querySelector('#audiodeviceinfo');
+        let videodeviceinfo = document.querySelector('#videodeviceinfo');
 
         window.onload = init;
         function init() {
@@ -49,8 +58,15 @@
         function start() {
             let audioSource = audioinputselector.value;
             let videoSource = videoinputselector.value;
+            // 使用deviceId指定音频源设备或视频源设备
+            // 采集到的本地流为stream， stream.getVideoTracks()[0].label可以获取捕获这个轨媒体数据的设备名称
+            // label标识该轨道的来源
             navigator.mediaDevices.getUserMedia({audio:{deviceId: audioSource}, video:{deviceId: videoSource}}).then(function(stream){
                 preview_video.srcObject = stream;
+                var videodeviceinfotext = "视频输入设备名称： " + stream.getVideoTracks()[0].label;
+                var audiodeviceinfotext = "音频输入设备名称： " + stream.getAudioTracks()[0].label;
+                videodeviceinfo.innerHTML = videodeviceinfotext;
+                audiodeviceinfo.innerHTML = audiodeviceinfotext;
             });
         }
     </script>

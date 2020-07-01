@@ -1,5 +1,10 @@
-// 获取发送的统计报告，并显示发送数据的比特率和每秒发送的包数量
-// RTCPeerConnection.getSenders()[0].getStats() 是获取发送的统计报告，得到的是RTCStatsReport是一个字典
+//通话过程中改变带宽 change bandwidth on the fly
+//修改bandwidth值会影响实际发送的比特率和每秒发送的媒体包数量
+
+//方式1：使用 RTCRtpSender.setParameters 在不重新进行本地协商的情况下改变带宽，
+//但是要注意，通过 RTCRtpSender.setParameters 设置的最大带宽要在通过SDP协商的初始最大带宽的范围内。
+
+//方式2：通过在本地进行重协商来限制带宽，也就是改变sdp并重新设置sdp
 
 'use strict'
 

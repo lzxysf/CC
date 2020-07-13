@@ -16,7 +16,7 @@ var room = "testroom";
 
 var pcConfig = {
     'iceServers': [{
-        'urls': 'turn:140.143.188.52:3477',
+        'urls': 'turn:lishifu.work:3478',
         'credential': "216857",
         'username': "lzxysf"
     }]
@@ -25,7 +25,7 @@ var pcConfig = {
 window.onload = init;
 
 function init() {
-    socket = io.connect("ws://140.143.188.52:3000");
+    socket = io.connect("https://lishifu.work:4430");
     socket.on('message', (room, data)=>{
         if(data.type == 'offer') {
             pc = new RTCPeerConnection(pcConfig);
@@ -84,21 +84,27 @@ function init() {
     socket.on('leaved', (room, socketid)=>{
         pc.close();
         pc = null;
+        remote_video.srcObject = null;
+        local_video.srcObject = null;
+        localstream = null;
     });
 
     socket.on('bye', (room, socketid)=>{
         pc.close();
         pc = null;
+        remote_video.srcObject = null;
+        local_video.srcObject = null;
+        localstream = null;
     });
-
-    socket.emit('join', room);
 }
 
 function start() {
-    let stream = navigator.mediaDevices.getUserMedia({video:true, audio:false}).then(function(stream){
+    navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(function(stream){
         localstream = stream;
-        local_video.srcObject = stream;
+        local_video.srcObject = localstream;
     });
+    //每次start都加入(join)房间，hangup时离开(leave)房间
+    socket.emit('join', room);
 }
 
 function call() {
@@ -121,7 +127,7 @@ function call() {
             console.log('this is the end candidate')
         }
     }
-    pc.createOffer({offerToReceiveAudio:0, offerToReceiveVideo:1}).then((desc)=> {
+    pc.createOffer({offerToReceiveAudio:1, offerToReceiveVideo:1}).then((desc)=> {
         local_sdp.value = desc.sdp;
         pc.setLocalDescription(desc);
         var data = {

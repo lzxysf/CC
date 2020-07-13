@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <audio id = "local_audio" autoplay controls></audio>
+    <audio id = "remote_audio" autoplay controls></audio>
+    <div>
+        <button id='start' onclick="start()">start</button>
+        <button id='call' onclick="call()">call</button>
+        <button id='hangup' onclick="hangup()">hangup</button>
+    </div>
+    <div>
+        <textarea id="dtmftext" cols="30" rows="10" style="resize:none;"></textarea>
+        <textarea id="recvtone" cols="30" rows="10" style="resize:none;" readonly></textarea>
+    </div>
+    <div>
+        <button id='senddtmf' onclick="senddtmf()">senddtmf</button>
+    </div>
+    <script src="../js/adapter-latest.js"></script>
+    <script src="../js/socket.io.js"></script>
+    <script src="./index.js"></script>
+</body>
+
+</html>

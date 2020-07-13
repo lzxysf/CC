@@ -1,19 +1,32 @@
 var express = require('express')
 var serveIndex = require('serve-index')
 var http = require('http')
+var https = require('https')
 var socketio = require('socket.io')
+var fs = require('fs')
 
 //指定要显示的页面的路径
 var app = express();
-app.use(serveIndex('./'))
-app.use(express.static('./'))
+app.use(serveIndex('../'))
+app.use(express.static('../'))
 
 //启动一个http服务器，端口为3000
 var http_server = http.createServer(app)
 http_server.listen(3000, '0.0.0.0')
 
 //使用http服务器启动一个socketio服务
-var io = socketio.listen(http_server)
+// var io = socketio.listen(http_server)
+
+//启动一个https服务器
+var options = {
+	key : fs.readFileSync('./cert/2_lishifu.work.key'),
+	cert: fs.readFileSync('./cert/1_lishifu.work_bundle.crt')
+}
+var https_server = https.createServer(options, app);
+https_server.listen(4430, '0.0.0.0');
+
+//使用https服务器启动一个socketio服务
+var io = socketio.listen(https_server);
 
 io.sockets.on('connection', (socket)=> {
     
@@ -43,7 +56,7 @@ io.sockets.on('connection', (socket)=> {
     });
 
     socket.on('message', (room, data) => {
-        console.log("收到了房间" + room + "的数据" + data);
+        console.log("收到了房间" + room + "的数据" + JSON.stringify(data));
         socket.to(room).emit('message', room, data); //房间内除自己外的所有人（一对一通信中也就是对端）发送message消息
         var type = data.type;
     });

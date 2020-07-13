@@ -1,0 +1,43 @@
+1.nginx配置文件在/etc/nginx/conf.d/server1.conf
+nginx作为http的web服务器配置文件内容如下：
+server {
+    listen 80;                                                         
+    server_name localhost;                                               
+    client_max_body_size 1024M;
+ 
+    location / {
+        root /home/ubuntu/CC/html;
+        index index.html;
+    }
+
+    location /webrtc {
+        alias /home/ubuntu/CC/webrtc;
+    }
+}
+
+nginx作为https的web服务器需要配置SSL证书,
+/etc/nginx/conf.d/cert下为申请的SSL证书，只有使用SSL证书才能开启https服务
+server {
+    listen 443 ssl;  # 1.1版本后这样写
+    server_name lishifu.work; #填写绑定证书的域名
+    ssl_certificate /etc/nginx/conf.d/cert/1_lishifu.work_bundle.crt;  # 指定证书的位置，绝对路径
+    ssl_certificate_key /etc/nginx/conf.d/cert/2_lishifu.work.key;  # 绝对路径，同上
+    ssl_session_timeout 5m;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2; #按照这个协议配置
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE;#按照这个套件配置
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        root /home/ubuntu/CC/html;
+        index index.html;
+    }
+
+    location /webrtc {
+        alias /home/ubuntu/CC/webrtc;
+    }
+}
+
+修改Nginx的配置文件后，
+运行 sudo nginx -s reload 重新加载配置即可
+sudo nginx -s quit 关闭nginx服务
+sudo nginx -c /etc/nginx/nginx.conf 开启nginx服务

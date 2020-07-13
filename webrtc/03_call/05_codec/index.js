@@ -1,10 +1,6 @@
-//通话过程中改变带宽 change bandwidth on the fly
-//修改bandwidth值会影响实际发送的比特率和每秒发送的媒体包数量
-
-//方式1：使用 RTCRtpSender.setParameters 在不重新进行本地协商的情况下改变带宽，
-//但是要注意，通过 RTCRtpSender.setParameters 设置的最大带宽要在通过SDP协商的初始最大带宽的范围内。
-
-//方式2：通过在本地进行重协商来限制带宽，也就是改变sdp并重新设置sdp
+//change codecs before the call 在通话前提前设置编解码方式
+//注意：上一个例子中带宽是在通话过程中设置的，但是编解码方式设置必须在通话前
+//因此selector控件初始状态为disabled，start后取消disabled，call后disabled，hangup后取消disabled
 
 'use strict'
 
@@ -15,7 +11,7 @@ let btn_call = document.querySelector('#call')
 let btn_hangup = document.querySelector('#hangup')
 let local_sdp = document.querySelector('textarea#local_sdp')
 let remote_sdp = document.querySelector('textarea#remote_sdp')
-let bandwidthselector = document.querySelector('#bandwidthselector')
+let codecsselector = document.querySelector('#codecsselector')
 
 let localstream;
 var pc;
@@ -32,7 +28,7 @@ var lastReports = null;
 
 window.onload = init;
 function init() {
-    socket = io.connect("ws://140.143.188.52:3000");
+    socket = io.connect("https://lishifu.work:4430");
     socket.on('message', (room, data)=>{
         if(data.type == 'offer') {
             pc = new RTCPeerConnection();
@@ -91,6 +87,7 @@ function init() {
     socket.on('leaved', (room, socketid)=>{
         pc.close();
         pc = null;
+        codecsselector.disabled = false;
     });
 
     socket.on('bye', (room, socketid)=>{
@@ -107,6 +104,8 @@ function init() {
     packetSeries = new TimelineDataSeries();
     packetGraph = new TimelineGraphView('packetGraph', 'packetCanvas');
     packetGraph.updateEndDate();
+
+    codecsselector.disabled = true;
 }
 
 function start() {
@@ -114,6 +113,42 @@ function start() {
         localstream = stream;
         local_video.srcObject = stream;
     });
+
+    addSupportCodecs();
+    codecsselector.disabled = false;
+}
+
+//获取视频编解码的能力列表并添加到界面
+//RTCRtpSender的静态方法getCapabilitie可以获得媒体能力，它的返回值为RTCRtpCapabilities 
+//返回值RTCRtpCapabilities格式如 codecs: Array(10), headerExtensions: Array(9)
+//因此要获得 codecs 应当使用 const {codecs} = RTCRtpSender.getCapabilities('video')
+function addSupportCodecs() {
+    const {codecs} = RTCRtpSender.getCapabilities('video');
+    codecs.forEach((codec)=>{
+        //red fec都是种冗余的机制，rtx是重传的机制，这些不加入界面列表中
+        if(codec.mimeType == 'video/red' || codec.mimeType == 'video/ulpfec' || codec.mimeType == 'video/rtx') {
+            return;
+        }
+        let value = codec.mimeType + ' ' + (codec.sdpFmtpLine || '').trim(); //codec可能无参数sdpFmtpLine
+        let option = document.createElement('option');
+        option.value = value;
+        option.innerHTML = value;
+        codecsselector.appendChild(option);
+    });
+}
+
+//注意，由于改变codecs要在通话之前，因此此函数必须在CreateOffer()之前调用
+function changeCodecsBeforeCall() {
+    const [mimeType, sdpFmtpLine] = codecsselector.value.split(' ');
+    var {codecs} = RTCRtpSender.getCapabilities('video');
+    var selectedIndex = codecs.findIndex(codec=>codec.mimeType == mimeType && codec.sdpFmtpLine == sdpFmtpLine);
+    var selectedCodec = codecs[selectedIndex];
+    //将选中的codec移动到整个codecs数组的最前面
+    codecs.splice(selectedIndex, 1);
+    codecs.unshift(selectedCodec);
+
+    const transceiver = pc.getTransceivers().find(t => t.sender && t.sender.track === localstream.getVideoTracks()[0]);
+    transceiver.setCodecPreferences(codecs);
 }
 
 function call() {
@@ -121,6 +156,9 @@ function call() {
     localstream.getTracks().forEach((track)=>{
         pc.addTrack(track, localstream);
     });
+
+    changeCodecsBeforeCall();
+
     pc.ontrack = (ev)=>{
         remote_video.srcObject = ev.streams[0];
     }
@@ -145,6 +183,8 @@ function call() {
         }
         socket.emit('message', room , data);
     });
+
+    addSupportCodecs.disabled = true;
 }
 
 function hangup() {
@@ -186,56 +226,3 @@ window.setInterval(()=>{
         lastReports = reports;
     });
 }, 1000);
-
-//修改bandwidth值会影响实际发送的比特率和每秒发送的媒体包数量
-
-//方式1：使用 RTCRtpSender.setParameters 在不重新进行本地协商的情况下改变带宽，
-//但是要注意，通过 RTCRtpSender.setParameters 设置的最大带宽要在通过SDP协商的初始最大带宽的范围内。
-// bandwidthselector.onchange = ()=>{
-//     var bandwidth = bandwidthselector.value;
-
-//     const sender = pc.getSenders()[0];
-//     const parameters = sender.getParameters();
-//     if(!parameters.encodings) {
-//         parameters.encodings = [{}];
-//     }
-//     if(bandwidth == 'unlimited') {
-//         delete parameters.encodings[0].maxBitrate;
-//     } else {
-//         parameters.encodings[0].maxBitrate = bandwidth * 1000;
-//     }
-//     sender.setParameters(parameters);
-// }
-
-//方式2：通过在本地进行重协商来限制带宽
-bandwidthselector.onchange = ()=>{
-    var bandwidth = bandwidthselector.value;
-    
-    pc.createOffer({offerToReceiveAudio:0, offerToReceiveVideo:1}).then((desc)=> {
-        pc.setLocalDescription(desc);
-        updateBandwidthRestriction(pc.remoteDescription.sdp, bandwidth);
-        pc.setRemoteDescription({
-            type: pc.remoteDescription.type,
-            sdp: bandwidth == 'unlimited' ? removeBandwidthRestriction(pc.remoteDescription.sdp) : updateBandwidthRestriction(pc.remoteDescription.sdp, bandwidth)
-        });
-    });
-}
-
-function updateBandwidthRestriction(sdp, bandwidth) {
-    let modifier = 'AS';
-    if (adapter.browserDetails.browser === 'firefox') {
-        bandwidth = (bandwidth >>> 0) * 1000;
-        modifier = 'TIAS';
-    }
-    if (sdp.indexOf('b=' + modifier + ':') === -1) {
-        // insert b= after c= line.
-        sdp = sdp.replace(/c=IN (.*)\r\n/, 'c=IN $1\r\nb=' + modifier + ':' + bandwidth + '\r\n');
-    } else {
-        sdp = sdp.replace(new RegExp('b=' + modifier + ':.*\r\n'), 'b=' + modifier + ':' + bandwidth + '\r\n');
-    }
-    return sdp;
-}
-
-function removeBandwidthRestriction(sdp) {
-    return sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, '');
-}

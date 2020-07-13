@@ -1,6 +1,5 @@
-//change codecs before the call 在通话前提前设置编解码方式
-//注意：上一个例子中带宽是在通话过程中设置的，但是编解码方式设置必须在通话前
-//因此selector控件初始状态为disabled，start后取消disabled，call后disabled，hangup后取消disabled
+// 获取发送的统计报告，并显示发送数据的比特率和每秒发送的包数量
+// RTCPeerConnection.getSenders()[0].getStats() 是获取发送的统计报告，得到的是RTCStatsReport是一个字典
 
 'use strict'
 
@@ -11,7 +10,6 @@ let btn_call = document.querySelector('#call')
 let btn_hangup = document.querySelector('#hangup')
 let local_sdp = document.querySelector('textarea#local_sdp')
 let remote_sdp = document.querySelector('textarea#remote_sdp')
-let codecsselector = document.querySelector('#codecsselector')
 
 let localstream;
 var pc;
@@ -28,7 +26,7 @@ var lastReports = null;
 
 window.onload = init;
 function init() {
-    socket = io.connect("ws://140.143.188.52:3000");
+    socket = io.connect("https://lishifu.work:4430");
     socket.on('message', (room, data)=>{
         if(data.type == 'offer') {
             pc = new RTCPeerConnection();
@@ -87,7 +85,6 @@ function init() {
     socket.on('leaved', (room, socketid)=>{
         pc.close();
         pc = null;
-        codecsselector.disabled = false;
     });
 
     socket.on('bye', (room, socketid)=>{
@@ -104,8 +101,6 @@ function init() {
     packetSeries = new TimelineDataSeries();
     packetGraph = new TimelineGraphView('packetGraph', 'packetCanvas');
     packetGraph.updateEndDate();
-
-    codecsselector.disabled = true;
 }
 
 function start() {
@@ -113,42 +108,6 @@ function start() {
         localstream = stream;
         local_video.srcObject = stream;
     });
-
-    addSupportCodecs();
-    codecsselector.disabled = false;
-}
-
-//获取视频编解码的能力列表并添加到界面
-//RTCRtpSender的静态方法getCapabilitie可以获得媒体能力，它的返回值为RTCRtpCapabilities 
-//返回值RTCRtpCapabilities格式如 codecs: Array(10), headerExtensions: Array(9)
-//因此要获得 codecs 应当使用 const {codecs} = RTCRtpSender.getCapabilities('video')
-function addSupportCodecs() {
-    const {codecs} = RTCRtpSender.getCapabilities('video');
-    codecs.forEach((codec)=>{
-        //red fec都是种冗余的机制，rtx是重传的机制，这些不加入界面列表中
-        if(codec.mimeType == 'video/red' || codec.mimeType == 'video/ulpfec' || codec.mimeType == 'video/rtx') {
-            return;
-        }
-        let value = codec.mimeType + ' ' + (codec.sdpFmtpLine || '').trim(); //codec可能无参数sdpFmtpLine
-        let option = document.createElement('option');
-        option.value = value;
-        option.innerHTML = value;
-        codecsselector.appendChild(option);
-    });
-}
-
-//注意，由于改变codecs要在通话之前，因此此函数必须在CreateOffer()之前调用
-function changeCodecsBeforeCall() {
-    const [mimeType, sdpFmtpLine] = codecsselector.value.split(' ');
-    var {codecs} = RTCRtpSender.getCapabilities('video');
-    var selectedIndex = codecs.findIndex(codec=>codec.mimeType == mimeType && codec.sdpFmtpLine == sdpFmtpLine);
-    var selectedCodec = codecs[selectedIndex];
-    //将选中的codec移动到整个codecs数组的最前面
-    codecs.splice(selectedIndex, 1);
-    codecs.unshift(selectedCodec);
-
-    const transceiver = pc.getTransceivers().find(t => t.sender && t.sender.track === localstream.getVideoTracks()[0]);
-    transceiver.setCodecPreferences(codecs);
 }
 
 function call() {
@@ -156,9 +115,6 @@ function call() {
     localstream.getTracks().forEach((track)=>{
         pc.addTrack(track, localstream);
     });
-
-    changeCodecsBeforeCall();
-
     pc.ontrack = (ev)=>{
         remote_video.srcObject = ev.streams[0];
     }
@@ -183,8 +139,6 @@ function call() {
         }
         socket.emit('message', room , data);
     });
-
-    addSupportCodecs.disabled = true;
 }
 
 function hangup() {
@@ -205,6 +159,7 @@ window.setInterval(()=>{
             let bytes;
             let packets;
             if(report.type == 'outbound-rtp') {
+                console.log(report);
                 if(report.isRemote) {
                     return;
                 }

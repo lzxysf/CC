@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <video id = "preview_video" autoplay playsinline style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <video id = "playback_video" autoplay playsinline style="background: #222; --width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></video>
+    <div>
+        <textarea id="local_sdp" style="--width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></textarea>
+        <textarea id="remote_sdp" style="--width: 25vw; width: var(--width); height: calc(var(--width) * 0.5625);"></textarea>
+    </div>
+    <div>
+        <button id='start' onclick="start()">start</button>
+        <button id='call' onclick="call()">call</button>
+        <button id="turnonvideo" onclick="turnonvideo()">turn video on</button>
+        <button id='hangup' onclick="hangup()">hangup</button>
+    </div>
+    <script src="../js/adapter-latest.js"></script>
+    <script src="../js/socket.io.js"></script>
+    <script src="./index.js"></script>
+</body>
+
+</html>

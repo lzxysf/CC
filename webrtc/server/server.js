@@ -43,12 +43,17 @@ io.sockets.on('connection', (socket)=> {
 
     socket.on('leave', room => {
         var myRoom = io.sockets.adapter.rooms[room];
+        //客户端可能多次调用了leave，在此前的leave中room中成员可能都退出了，此时这个room也会自动解散了
+        if(myRoom == undefined) {
+            console.log('无该room')
+            return;
+        }
         var users = Object.keys(myRoom.sockets);
         socket.emit('leaved', room, socket.id); //向当前客户端发送leaved消息
         socket.to(room).emit('bye', room, socket.id); //向房间内所有人（除自己外）发送bye消息
         socket.leave(room);
         map.delete(socket.id);
-        console.log("房间内当前用户数为" + users.length);
+        console.log("房间内当前用户数为" + (users.length - 1));
     });
 
     socket.on('message', (room, data) => {

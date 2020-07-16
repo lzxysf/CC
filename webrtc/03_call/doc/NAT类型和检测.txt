@@ -1,0 +1,64 @@
+1. NAT (Network Address Transfer) （网络地址转换） 主要是将本地地址和端口转换成公网地址和端口
+2. 内部Tuple 外部Tuple 目标Tuple
+在描述NAT四种类型前，先说明几个用语定义。
+内部Tuple：指内部主机的私有地址和端口号所构成的二元组
+外部Tuple: 指内部主机经NAT转换后，所获得的外部主机的地址和端口号所构成的二元组
+           即服务器收到经NAT转换之后的报文时，它所看到的该报文的源地址（通常是NAT设备的地址）和源端口
+目标Tuple: 指外部主机和端口所构成的二元组
+           即内部主机所发送报文的目标地址、端口所构成的二元组
+
+3. NAT分为四种类型：完全锥型、域名限制型、端口限制型、对称型
+完全锥型（Full Cone NAT）：NAT设备可以向内转发所有外部主机的报文
+    所有来自同一个内部TupleX的请求均被NAT转换至同一个外部TupleY，而不管这些请求是不是属于同一个应用或者是多个应用的
+    除此之外，当X-Y的转换关系建立之后，任意外部主机均可随时将Y中的地址和端口作为目标地址和目标端口，向内部主机发送UDP报文
+    由于对外部请求的来源无任何限制，因此这种方式虽然足够简单，但却不那么安全
+
+域名限制型（Restricted Cone NAT）：NAT设备只向内转发已知的外部主机IP的报文
+    它是Full Cone的受限版本，所有来自同一个内部TupleX的请求均被NAT转换至同一个外部TupleY，这与FullCone相同
+    但不同的是只有当内部主机曾经发送过报文给外部主机（假设其IP地址为Z）后，外部主机才能以Y中的信息作为目标地址和目标端口，向内部主机发送UDP请求报文
+    这意味着NAT设备只向内转发（目标地址/端口转换）那些来自于当前已知的外部主机的UDP报文，从而保障了外部请求来源的安全性
+
+端口限制型（Port Restricted Cone NAT）：NAT设备只向内转发已知的外部主机IP、端口的报文
+    它是Restricted ConeNAT的进一步受限版，只有当内部主机曾经发送过报文给外部主机（假设其IP地址为Z且端口为P）之后，
+    外部主机才能以Y中的信息作为目标地址和目标端口，向内部主机发送UDP报文，同时其请求报文的源端口必须为P
+    这一要求进一步强化了对外部报文请求来源的限制，从而较RestrictdCone更具安全性
+
+对称型（Symmetric NAT）：针对不同的目标Tuple，NAT为其分配不同的外部Tuple    NAT设备根据不同的目标Tuple向内转发给不同的内部Tuple
+    只有来自于同一个内部Tuple且针对同一目标Tuple的请求才被NAT转换至同一个外部Tuple，否则的话NAT将为之分配一个新的外部Tuple
+    打个比方，当内部主机以相同的内部Tuple对2个不同的目标Tuple发送UDP报文时，此时NAT将会为内部主机分配两个不同的外部Tuple，并且建立起两个不同的内、外部Tuple转换关系
+    与此同时，只有接收到了内部主机所发送的数据包的外部主机才能向内部主机返回UDP报文，这里对外部返回报文来源的限制是与PortRestricted Cone一致的
+    不难看出，如果说Full Cone是要求最宽松NAT UDP转换方式，那么，SymmetricNAT则是要求最严格的NAT方式，其不仅体现在转换关系的建立上，而且还体现在对外部报文来源的限制方面
+    内部TupleA<-->外部TupleA<-->目标TupleA
+    内部TupleB<-->外部TupleB<-->目标TupleB
+
+4.NAT类型检测
+前提条件:有一个公网的Server并且绑定了两个公网IP(IP-1,IP-2)。这个Server做UDP监听(IP-1,Port-1),(IP-2,Port-2)并根据客户端的要求进行应答。
+
+第一步：检测客户端是否有能力进行UDP通信以及客户端是否位于NAT后？
+    客户端建立UDPsocket然后用这个socket向服务器的(IP-1,Port-1)发送数据包要求服务器返回客户端的IP和Port,
+    客户端发送请求后立即开始接受数据包，要设定socket Timeout（300ms）防止无限堵塞。重复这个过程若干次，
+    如果每次都超时，无法接受到服务器的回应，则说明客户端无法进行UDP通信，可能是防火墙或NAT阻止UDP通信，这样的客户端也就不能P2P了（检测停止）。 
+    当客户端能够接收到服务器的回应时，需要把服务器返回的客户端（IP,Port）和这个客户端socket的（LocalIP，LocalPort）比较。
+    如果完全相同则客户端不在NAT后，这样的客户端具有公网IP可以直接监听UDP端口接收数据进行通信（检测停止）。
+    否则客户端在NAT后要做进一步的NAT类型检测(继续)。
+
+第二步：检测客户端NAT是否是Full Cone NAT？
+    客户端建立UDPsocket然后用这个socket向服务器的(IP-1,Port-1)发送数据包要求服务器用另一对(IP-2,Port-2)响应客户端的请求往回发一个数据包,
+    客户端发送请求后立即开始接受数据包，要设定socket Timeout（300ms）防止无限堵塞。重复这个过程若干次，如果每次都超时，无法接受到服务器的回应，
+    则说明客户端的NAT不是一个Full ConeNAT，具体类型有待下一步检测(继续)。
+    如果能够接受到服务器从(IP-2,Port-2)返回的应答UDP包，则说明客户端是一个FullCone NAT，这样的客户端能够进行UDP-P2P通信（检测停止）。
+
+第三步：检测客户端NAT是否是Symmetric NAT？
+    客户端建立UDPsocket然后用这个socket向服务器的(IP-1,Port-1)发送数据包要求服务器返回客户端的IP和Port,
+    客户端发送请求后立即开始接受数据包，要设定socket Timeout（300ms）防止无限堵塞。重复这个过程直到收到回应（一定能够收到，因为第一步保证了这个客户端可以进行UDP通信）。
+    用同样的方法用一个socket向服务器的(IP-2,Port-2)发送数据包要求服务器返回客户端的IP和Port。 
+    比较上面两个过程从服务器返回的客户端(IP,Port),如果两个过程返回的(IP,Port)有一对不同则说明客户端为SymmetricNAT，这样的客户端无法进行UDP-P2P通信（检测停止）。
+    否则是Restricted Cone NAT，是否为PortRestricted Cone NAT有待检测(继续)。
+
+第四步：检测客户端NAT是否是Restricted Cone NAT还是Port Restricted Cone NAT？
+    客户端建立UDPsocket然后用这个socket向服务器的(IP-1,Port-1)发送数据包要求服务器用IP-1和一个不同于Port-1的端口发送一个UDP数据包响应客户端, 
+    客户端发送请求后立即开始接受数据包，要设定socket Timeout（300ms），防止无限堵塞。重复这个过程若干次，如果每次都超时，无法接受到服务器的回应，
+    则说明客户端是一个Port Restricted ConeNAT，如果能够收到服务器的响应则说明客户端是一个Restricted ConeNAT。以上两种NAT都可以进行UDP-P2P通信。
+
+5.NAT类型检测工具
+NatTypeTester

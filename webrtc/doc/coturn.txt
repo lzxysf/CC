@@ -1,0 +1,5 @@
+1.coturn服务器启动方式
+turnserver -o -a -f -v --mobility -m 10 --max-bps=100000 --min-port=32355 --max-port=65535 --user=lzxysf:216857 --user=root:root -r hbfec
+
+2.coturn服务器配置文件位置
+/usr/local/etc/turnserver.conf

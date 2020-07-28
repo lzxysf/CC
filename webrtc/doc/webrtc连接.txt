@@ -1,0 +1,37 @@
+1.RTCPeerConnection 接口代表一个由本地计算机到远端的WebRTC连接。该接口提供了创建，保持，监控，关闭连接的方法的实现。
+2.RTCPeerConnection 此功能某些浏览器处于开发中，为了保持兼容性，建议使用补充库如Adapter.js，否则可能会出现意想不到的兼容性错误。
+可以在html文件中引入adapter.js库
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+3.本例中没有signal服务器和stun服务器，是直接在本地中转，一个界面上同时显示本地画面和远端画面
+
+4.webrtc的通信流程见“webrtc通信流程图”
+webrtc并不提供Stun服务器和Signal服务器，服务器端需要自己实现。
+Stun服务器可以用google提供的实现stun协议的测试服务器（stun:stun.l.google.com:19302）,
+Signal服务器则完全需要自己实现了，它需要在ClientA和ClientB之间传送彼此的SDP信息和candidate信息，
+ClientA和ClientB通过这些信息建立P2P连接来传送音视频数据。
+由于网络环境的复杂性，并不是所有的客户端之间都能够建立P2P连接，这种情况下就需要有个relay服务器做音视频数据的中转。
+这里说明一下， stun/turn、relay服务器的实现在WebRTC源码中都有示例，真是个名副其实的大宝库。
+
+流程描述如下:
+-->ClientA首先创建RTCPeerConnection对象，然后打开本地音视频设备，通过addTrack将音视频轨添加到RTCPeerConnection中。
+
+-->ClientA调用RTCPeerConnection的CreateOffer方法创建一个用于offer的SDP对象，SDP对象中保存当前音视频的相关参数。
+ClientA通过RTCPeerConnection的SetLocalDescription方法将该SDP对象保存起来，并通过Signal服务器发送给ClientB。
+
+-->ClientB接收到ClientA发送过的offer SDP对象，通过RTCPeerConnection的SetRemoteDescription方法将其保存起来，并调用RTCPeerConnection的CreateAnswer方法创建一个应答的SDP对象，通过PeerConnection的SetLocalDescription的方法保存该应答SDP对象并将它通过Signal服务器发送给ClientA。
+
+-->ClientA接收到ClientB发送过来的应答SDP对象，将其通过RTCPeerConnection的SetRemoteDescription方法保存起来。
+
+-->在SDP信息的offer/answer流程中，ClientA和ClientB已经根据SDP信息创建好相应的音频Channel和视频Channel并开启Candidate数据的收集，Candidate数据可以简单地理解成Client端的IP地址信息（本地IP地址、公网IP地址、Relay服务端分配的地址）。
+
+-->当ClientA收集到Candidate信息后，RTCPeerConnection会通过OnIceCandidate接口给ClientA发送通知，ClientA将收到的Candidate信息通过Signal服务器发送给ClientB，ClientB通过RTCPeerConnection的AddIceCandidate方法保存起来。同样的操作ClientB对ClientA再来一次。
+
+-->这样ClientA和ClientB就已经建立了音视频传输的P2P通道，ClientB接收到ClientA传送过来的音视频流，会通过RTCPeerConnection的ontrack回调接口返回一个标识ClientA端音视频流的MediaStream对象，在ClientB端渲染出来即可。同样操作也适应ClientB到ClientA的音视频流的传输。
+
+5.注意
+pc1.addTrack(track) 是添加媒体轨，此时pc2.ontrack中获得的也是媒体轨，远端要呈现画面需要每次新建一个MediaStream，
+将媒体轨添加进MediaStream，然后将MediaStream赋值给video进行播放
+
+pc2.addTrack(track, localStream) 会将媒体轨和流绑定，此时pc2.ontrack中可以直接获得媒体流，直接赋值给video进行播放
+

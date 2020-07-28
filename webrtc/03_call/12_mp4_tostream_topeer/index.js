@@ -103,13 +103,13 @@ function init() {
 
 function start() {
     //将本地媒体文件进行播放并获取媒体流
-    local_video.src = "video.mp4";
+    local_video.src = "video.webm";
     local_video.autoplay = true;
     localstream = local_video.captureStream();
 
     //或者直接通过新创建的标签video获取媒体流，这样就不现实本地视频画面了
     // var local_video2 = document.createElement('video');
-    // local_video2.src = "video.mp4";
+    // local_video2.src = "video.webm";
     // local_video2.autoplay = true;
     // localstream = local_video2.captureStream();
 

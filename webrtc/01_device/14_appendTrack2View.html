@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>appendTrack2View</title>
+</head>
+
+<body>
+    <video id="left_video" autoplay playsinline style="background: #222; width: 800px; height: 600px">
+
+    <script>
+        var left_video = document.querySelector('video#left_video');
+        window.onload = initApp;
+        async function initApp() {
+            var stream2 = await navigator.mediaDevices.getUserMedia({
+                audio: true
+            });
+            var track2 = stream2.getAudioTracks()[0];
+            addTrackToVideoElement(track2, left_video);
+
+            var stream1 = await navigator.mediaDevices.getUserMedia({
+                video: true
+            });
+            var track1 = stream1.getVideoTracks()[0];
+            addTrackToVideoElement(track1, left_video);
+
+            var stream3 = await navigator.mediaDevices.getDisplayMedia();
+            var track3 = stream3.getVideoTracks()[0];
+            addTrackToVideoElement(track3, left_video);
+        }
+
+
+    </script>
+</body>
+
+</html>

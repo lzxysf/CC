@@ -23,7 +23,6 @@ var io = socketio.listen(https_server);
 var map = new Map();
 
 io.sockets.on('connection', (socket)=> {
-    
     socket.on('join', room => {
         socket.join(room);
         map.set(socket.id, socket);

@@ -57,14 +57,15 @@ new Vue({
         roomusers : [],
         screeningudn : '',
         showusers : false,
-        showMessageDialog : false,
-        msgtosend : '',
-        msgingudn : ''
+        showfiles : false,
+        roomfiles : []
     },
     mounted() {
         this.initUserCards();
         var user = {udn:'1001', username:'lzxysf', allowvideo:true, allowaudio:true};
         this.roomusers.push(user);
+        var file = {filename:'abc.txt', udn:'1001', progress:'20%'};
+        this.roomfiles.push(file);
     },
     methods: {
         changeItemType : function(type) {
@@ -425,13 +426,20 @@ new Vue({
                 }
             }
         },
-        showChatDialog : function(udn) {
-            this.showMessageDialog = true;
-            this.msgingudn = udn;
-            preSendToUser(udn);
+        handleFile : function(row, command) {
+            var filename = row.filename;
+            if(command === 'delfile') {
+                for(let i = 0; i < this.roomfiles.length; i++) {
+                    if(this.roomfiles[i].filename === filename) {
+                        this.roomfiles.splice(i, 1);
+                        this.$message('删除文件成功');
+                        break;
+                    }
+                }
+            }
         },
-        sendMsgToUser() {
-            sendToUser(this.msgingudn, this.msgtosend);
+        uploadFile : function() {
+            
         },
         backnotify : function(notify) {
             if(notify.type == 'newtrack') {

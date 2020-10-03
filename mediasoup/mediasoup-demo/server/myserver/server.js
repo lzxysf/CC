@@ -258,7 +258,7 @@ async function request_process(request) {
             var {roomId, transportId, sctpStreamParameters, label, protocol, appData} = data;
             var room = Room.getRoomById(roomId);
             if(room) {
-                var producerId = await room.produceData(transportId, sctpStreamParameters, label, protocol, appData.remote_udn);
+                var producerId = await room.produceData(transportId, sctpStreamParameters, label, protocol);
                 if(producerId) {
                     response.failure = FailureCode.Success;
                     response.data = {};

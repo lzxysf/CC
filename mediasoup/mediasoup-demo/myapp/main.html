@@ -130,7 +130,7 @@
                         title="用户列表"
                         :visible.sync="showusers"
                         :modal="false"
-                        size="20%"
+                        size="25%"
                         direction="ltr"
                         :with-header="false"
                         :modal-append-to-body="false">
@@ -146,47 +146,48 @@
                                             <el-dropdown-item @click.native="handleCommand(scope.row, 'allow', 'video')" v-show='!scope.row.allowvideo'>允许视频</el-dropdown-item>
                                             <el-dropdown-item @click.native="handleCommand(scope.row, 'forbid', 'audio')" v-show='scope.row.allowaudio'>禁止音频</el-dropdown-item>
                                             <el-dropdown-item @click.native="handleCommand(scope.row, 'allow', 'audio')" v-show='!scope.row.allowaudio'>允许音频</el-dropdown-item>
-                                            <el-dropdown-item @click.native="showChatDialog(scope.row.udn)">私聊</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </template>
                             </el-table-column>
                         </el-table>
                     </el-drawer>
-                    <el-dialog
-                        title="提示"
-                        :visible.sync="showMessageDialog"
-                        width="40%">
-                        <div slot="title">
-                            <span>与{{msgingudn}}聊天中...</span>
-                        </div>
-                        <el-card>
-                            <div style="margin: 5px; height:250px">
-                                <div style="height: 20px; text-align: left;">这是一段信息</div>
-                                <div style="height: 20px; text-align: right;">这是一段信息</div>
-                            </div>
-                        </el-card>
-                        <el-input
-                            style="margin: 5px auto"
-                            type="textarea"
-                            placeholder="请输入内容"
-                            v-model="msgtosend"
-                            maxlength="30"
-                            resize="none"
-                            :autosize="{ minRows: 2, maxRows: 4}"
-                            show-word-limit>
-                        </el-input>
-                        <el-button size="mini" style="float: right;" @click.native="sendMsgToUser">发 送</el-button>
-                    </el-dialog>
+                    <el-drawer
+                        title="文件"
+                        :visible.sync="showfiles"
+                        :modal="false"
+                        size="27%"
+                        direction="ltr"
+                        :with-header="false"
+                        :modal-append-to-body="false">
+                        <el-table :data="roomfiles" empty-text="房间内无文件">
+                            <el-table-column property="filename" label="文件名" width="80"></el-table-column>
+                            <el-table-column property="udn" label="上传用户" width="80"></el-table-column>
+                            <el-table-column property="progress" label="进度" width="80"></el-table-column>
+                            <el-table-column label="操作" width="100">
+                                <template slot-scope="scope">
+                                    <el-dropdown>
+                                        <span class="el-dropdown-link">文件管理<i class="el-icon-arrow-down el-icon--right"></i></span>
+                                        <el-dropdown-menu slot="dropdown">
+                                            <el-dropdown-item @click.native="handleFile(scope.row, 'savefile')">保存文件</el-dropdown-item>
+                                            <el-dropdown-item @click.native="handleFile(scope.row, 'delfile')">删除文件</el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </el-dropdown>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-drawer>
                     <el-row style="height: 6%; background-color:#EBEEF5; margin-bottom: 5px; padding-right: 10px;">
                         <el-col :span="12" style="text-align: left;">
                             <i class="fa fa-users" style="margin:15px 0 0 15px;" aria-hidden="true" @click="showusers=true"></i>
+                            <i class="fa fa-file" style="margin:15px 0 0 15px;" aria-hidden="true" @click="showfiles=true"></i>
                         </el-col>
                         <el-col :span="12" style="text-align: right;">
                             <i class="fa fa-microphone" style="margin:15px 0 0 15px;" :class="[ismicrunning?'running':'notrunning']" aria-hidden="true"  @click='controlLocalMedia("audio")'></i>
                             <i class="fa fa-video-camera" style="margin:15px 0 0 15px;" :class="[iswebcamrunning?'running':'notrunning']" aria-hidden="true"  @click='controlLocalMedia("video")'></i>
                             <i class="fa fa-refresh" style="margin:15px 0 0 15px;" aria-hidden="true"  @click='switchCamera'></i>
                             <i class="fa fa-share" style="margin:15px 0 0 15px;" aria-hidden="true" @click='shareScreen'></i>
+                            <i class="fa fa-upload" style="margin:15px 0 0 15px;" aria-hidden="true" @click='uploadFile'></i>
                             <el-button size="mini" style="margin: 8px 5px 0 30px;" @click="_leaveRoom">退出房间</el-button>
                             <el-button size="mini" style="margin: 8px 15px 0 0;" @click="_closeRoom">关闭房间</el-button>
                         </el-col>

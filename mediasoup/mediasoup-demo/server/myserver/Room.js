@@ -286,6 +286,7 @@ class Room extends EventEmitter{
                         break;
                 }
             });
+            transport.observer.on('newdataproducer')
         }
         this._transports.set(transport.id, transport);
         return {
@@ -318,13 +319,19 @@ class Room extends EventEmitter{
             return null;
         }
     }
-    async produceData(transportId, sctpStreamParameters, label, protocol, remote_udn) {
+    async produceData(transportId, sctpStreamParameters, label, protocol) {
         var transport = this._transports.get(transportId);
         var udn = transport.appData.udn;
         if(transport && transport.appData.direction == 'send') {
             const dataProducer = await transport.produceData({sctpStreamParameters, label, protocol});
             console.log('new dataProducer created id[%s]', dataProducer.id);
             dataProducer.appData.udn = udn;
+            for(let i = 0; i < this._roomusers.length; i++) {
+                let user = User.getUserByUdn(this._roomusers[i].udn);
+                if(user && user._notify) {
+
+                }
+            }
             if(remote_udn) {
                 var user = User.getUserByUdn(remote_udn);
                 if(user && user._notify) {

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VideoChat</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <link rel="stylesheet" href="assets/font-awesome/css/font-awesome.min.css">
+  <script type='module' src='./index.js'></script>
+</head>
+<body style="overflow: hidden;">
+    <div id='app'>
+        <el-container>
+            <el-header>
+                <div style="width:50%; text-align: left; font-size: 20px; color: white; float: left;">
+                    <span>VIDEOCHAT</span>
+                </div>
+                <div style="width:50%; text-align: right; font-size: 12px; float: left;">
+                    <el-dropdown @click="_logout">
+                        <i class="el-icon-setting" style="margin-right: 15px"></i>
+                        <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item>查看</el-dropdown-item>
+                            <el-dropdown-item @click.native="_logout">注销</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                    <span>{{current_username}}</span>
+                </div>
+            </el-header>
+        </el-container>
+        <el-container style="height: 800px; border: 1px solid #eee">
+            <el-aside width="200px" style="background-color: rgb(238, 241, 246)">
+                <el-menu :default-openeds="['1','2']">
+                    <el-submenu index="1">
+                        <template slot="title"><i class="el-icon-message"></i>用户</template>
+                        <el-menu-item-group>
+                            <el-menu-item index="1-1" @click="changeItemType('register')">用户注册</el-menu-item>
+                            <el-menu-item index="1-2" @click="changeItemType('login')">用户登录</el-menu-item>
+                        </el-menu-item-group>
+                    </el-submenu>
+                    <el-submenu index="2">
+                        <template slot="title"><i class="el-icon-menu"></i>房间</template>
+                        <el-menu-item-group>
+                            <el-menu-item index="2-1" @click="changeItemType('createRoom')">创建房间</el-menu-item>
+                            <el-menu-item index="2-2" @click="changeItemType('joinRoom')">加入房间</el-menu-item>
+                            <el-menu-item index="2-3" v-if='current_room!=null' @click="changeItemType('room')">{{'房间'+current_room}}</el-menu-item>
+                            <el-menu-item index="2-4" v-if='screeningudn' @click="changeItemType('screen')">{{screeningudn+'投屏中'}}</el-menu-item>
+                        </el-menu-item-group>
+                    </el-submenu>
+                </el-menu>
+            </el-aside>
+            <el-main style="padding-top: 0px; padding-left: 0px; padding-right: 0px;">
+                <div style="text-align:center; margin-top: 10px;" v-show="item_type==='register'">
+                    <el-card class="box-card" style="width: 50%; display:inline-block;">
+                        <div>
+                            <el-input placeholder="用户号码" v-model='udn' style="width:20em; margin-bottom: 5px;"></el-input>
+                        </div>
+                        <div>
+                            <el-input placeholder="用户名" v-model="username" style="width:20em; margin-bottom: 5px;"></el-input>
+                        </div>
+                        <div>
+                            <el-input placeholder="密码" v-model="password" show-password style="width:20em; margin-bottom: 5px;"></el-input>
+                        </div>
+                        <el-button type="primary" plain @click='_register'>用户注册</el-button>
+                    </el-card>
+                </div>
+                <div style="text-align:center; margin-top: 10px;" v-show="item_type==='login'">
+                    <el-card class="box-card" style="width: 50%; display:inline-block;">
+                        <div>
+                            <el-input placeholder="用户号码" v-model='login_udn' style="width:20em; margin-bottom: 5px;"></el-input>
+                        </div>
+                        <div>
+                            <el-input placeholder="密码" v-model="login_password" show-password style="width:20em; margin-bottom: 5px;"></el-input>
+                        </div>
+                        <el-button type="primary" plain @click="_login">用户登陆</el-button>
+                    </el-card>
+                </div>
+                <div style="text-align:center; margin-top: 10px;" v-show="item_type==='createRoom'">
+                    <el-card class="box-card" style="width: 50%; display:inline-block;">
+                        <div>
+                            <el-input placeholder="房间号码" v-model='roomId' style="width:20em; margin-bottom: 5px;"></el-input>
+                            <el-select v-model="roomkind" placeholder="房间类型">
+                                <el-option
+                                    v-for="item in roomtypes"
+                                    :key="item.kind"
+                                    :label="item.label"
+                                    :value="item.kind">
+                                </el-option>
+                            </el-select>
+                        </div>
+                        <div>
+                            <el-button type="primary" plain @click="_createRoom">创建房间</el-button>
+                        </div>
+                    </el-card>
+                </div>
+                <div style="text-align:center; margin-top: 10px;" v-show="item_type==='joinRoom'">
+                    <el-card class="box-card" style="width: 50%; display:inline-block;">
+                        <div>
+                            <el-input placeholder="房间号码" v-model='join_roomId' style="width:20em; margin-bottom: 5px;"></el-input>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <el-checkbox label="音频" style="margin-right: 18px;" v-model="audiochecked"></el-checkbox>
+                            <el-select v-model="audiodevice" placeholder="选择麦克" :disabled='!audiochecked'>
+                                    <el-option
+                                        v-for="item in audiodevices"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                    </el-option>
+                            </el-select>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <el-checkbox label="视频" style="margin-right: 18px;" v-model="videochecked"></el-checkbox>
+                            <el-select v-model="videodevice" placeholder="选择摄像头" :disabled='!videochecked'>
+                                <el-option
+                                    v-for="item in videodevices"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <el-button type="primary" style="width:45%" plain @click="_joinRoom">加入房间</el-button>
+                        </div>
+                    </el-card>
+                </div>
+                <div style="text-align:center; width: 100%; height: 100%;" v-show="item_type==='room'">
+                    <el-drawer
+                        title="用户列表"
+                        :visible.sync="showusers"
+                        :modal="false"
+                        size="20%"
+                        direction="ltr"
+                        :with-header="false"
+                        :modal-append-to-body="false">
+                        <el-table :data="roomusers" empty-text="房间内无用户">
+                            <el-table-column property="username" label="用户名" width="100"></el-table-column>
+                            <el-table-column property="udn" label="号码" width="100"></el-table-column>
+                            <el-table-column label="操作" width="100">
+                                <template slot-scope="scope">
+                                    <el-dropdown>
+                                        <span class="el-dropdown-link">用户管理<i class="el-icon-arrow-down el-icon--right"></i></span>
+                                        <el-dropdown-menu slot="dropdown">
+                                            <el-dropdown-item @click.native="handleCommand(scope.row, 'forbid', 'video')" v-show='scope.row.allowvideo'>禁止视频</el-dropdown-item>
+                                            <el-dropdown-item @click.native="handleCommand(scope.row, 'allow', 'video')" v-show='!scope.row.allowvideo'>允许视频</el-dropdown-item>
+                                            <el-dropdown-item @click.native="handleCommand(scope.row, 'forbid', 'audio')" v-show='scope.row.allowaudio'>禁止音频</el-dropdown-item>
+                                            <el-dropdown-item @click.native="handleCommand(scope.row, 'allow', 'audio')" v-show='!scope.row.allowaudio'>允许音频</el-dropdown-item>
+                                            <el-dropdown-item @click.native="showChatDialog(scope.row.udn)">私聊</el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </el-dropdown>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-drawer>
+                    <el-dialog
+                        title="提示"
+                        :visible.sync="showMessageDialog"
+                        width="40%">
+                        <div slot="title">
+                            <span>与{{msgingudn}}聊天中...</span>
+                        </div>
+                        <el-card>
+                            <div style="margin: 5px; height:250px">
+                                <div style="height: 20px; text-align: left;">这是一段信息</div>
+                                <div style="height: 20px; text-align: right;">这是一段信息</div>
+                            </div>
+                        </el-card>
+                        <el-input
+                            style="margin: 5px auto"
+                            type="textarea"
+                            placeholder="请输入内容"
+                            v-model="msgtosend"
+                            maxlength="30"
+                            resize="none"
+                            :autosize="{ minRows: 2, maxRows: 4}"
+                            show-word-limit>
+                        </el-input>
+                        <el-button size="mini" style="float: right;" @click.native="sendMsgToUser">发 送</el-button>
+                    </el-dialog>
+                    <el-row style="height: 6%; background-color:#EBEEF5; margin-bottom: 5px; padding-right: 10px;">
+                        <el-col :span="12" style="text-align: left;">
+                            <i class="fa fa-users" style="margin:15px 0 0 15px;" aria-hidden="true" @click="showusers=true"></i>
+                        </el-col>
+                        <el-col :span="12" style="text-align: right;">
+                            <i class="fa fa-microphone" style="margin:15px 0 0 15px;" :class="[ismicrunning?'running':'notrunning']" aria-hidden="true"  @click='controlLocalMedia("audio")'></i>
+                            <i class="fa fa-video-camera" style="margin:15px 0 0 15px;" :class="[iswebcamrunning?'running':'notrunning']" aria-hidden="true"  @click='controlLocalMedia("video")'></i>
+                            <i class="fa fa-refresh" style="margin:15px 0 0 15px;" aria-hidden="true"  @click='switchCamera'></i>
+                            <i class="fa fa-share" style="margin:15px 0 0 15px;" aria-hidden="true" @click='shareScreen'></i>
+                            <el-button size="mini" style="margin: 8px 5px 0 30px;" @click="_leaveRoom">退出房间</el-button>
+                            <el-button size="mini" style="margin: 8px 15px 0 0;" @click="_closeRoom">关闭房间</el-button>
+                        </el-col>
+                    </el-row>
+                    <el-row style="height: 30%;">
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                    </el-row>
+                    <el-row style="height: 30%;">
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                    </el-row>
+                    <el-row style="height: 30%;">
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                        <el-col :span="8" class="user-card">
+                            <p class="diy-user"></p>
+                            <video autoplay playsinline class="diy-video"></video>
+                        </el-col>
+                    </el-row>
+                </div>
+                <div style="text-align:center; width: 100%; height: 100%;" v-show="item_type==='screen'">
+                    <video autoplay playsinline class='screen-video'></video>
+                </div>
+            </el-main>
+        </el-container>
+    </div>
+
+    <style>
+        .el-header {
+            background-color: #B3C0D1;
+            color: #333;
+            line-height: 60px;
+        }
+        
+        .el-aside {
+            color: #DCDFE6;
+        }
+
+        .user-card {
+            position: relative;
+            padding: 3px 5px
+        }
+
+        .diy-video {
+            background: #222;
+            --width: 25vw;
+            width: var(--width);
+            height: calc(var(--width) * 0.5625);
+            float: left;
+        }
+
+        .diy-user {
+            position: absolute;
+            background: rgba(255, 255, 255, 0);
+            color: gray;
+            --width: 25vw;
+            width: var(--width);
+            height: calc(var(--width) * 0.5625);
+            text-align: left;
+            margin: 0px;
+            float: left;
+            padding: 2px 4px;
+        }
+
+        .running {
+            color: royalblue;
+        }
+
+        .notrunning {
+            color:black;
+        }
+
+        .screen-video {
+            width: 100%;
+            height: 100%;
+        }
+
+        .el-dropdown-link {
+            cursor: pointer;
+            color: #409EFF;
+        }
+        .el-icon-arrow-down {
+            font-size: 12px;
+        }
+    </style>
+    <script src="control.js"></script>
+</body>
+</html>

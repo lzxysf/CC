@@ -187,7 +187,7 @@
                             <i class="fa fa-video-camera" style="margin:15px 0 0 15px;" :class="[iswebcamrunning?'running':'notrunning']" aria-hidden="true"  @click='controlLocalMedia("video")'></i>
                             <i class="fa fa-refresh" style="margin:15px 0 0 15px;" aria-hidden="true"  @click='switchCamera'></i>
                             <i class="fa fa-share" style="margin:15px 0 0 15px;" aria-hidden="true" @click='shareScreen'></i>
-                            <i class="fa fa-upload" style="margin:15px 0 0 15px;" aria-hidden="true" @click='uploadFile'></i>
+                            <i class="fa fa-upload" style="margin:15px 0 0 15px;" aria-hidden="true" @click='uploadFile'><input id="uploadInput" type="file" style="display: none;"/></i>
                             <el-button size="mini" style="margin: 8px 5px 0 30px;" @click="_leaveRoom">退出房间</el-button>
                             <el-button size="mini" style="margin: 8px 15px 0 0;" @click="_closeRoom">关闭房间</el-button>
                         </el-col>

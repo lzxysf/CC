@@ -439,7 +439,20 @@ new Vue({
             }
         },
         uploadFile : function() {
-            
+            preSendToRoom();
+            var uploadInput = document.createElement('input');
+            uploadInput.type = 'file';
+            uploadInput.click();
+            uploadInput.onchange = function() {
+                var selectfile = uploadInput.files[0];
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    var data = e.target.result;
+                    console.log(data);
+                    sendToRoom(data);
+                }
+                reader.readAsBinaryString(selectfile);
+            }
         },
         backnotify : function(notify) {
             if(notify.type == 'newtrack') {

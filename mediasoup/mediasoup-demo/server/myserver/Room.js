@@ -248,45 +248,58 @@ class Room extends EventEmitter{
         var transport = await this._mediasoupRouter.createWebRtcTransport(webRtcTransportOptions);
         transport.appData.udn = udn;
         transport.appData.direction = direction;
-        if(direction == 'send') {
+        if(direction === 'send') {
             transport.observer.on("newproducer", async (producer) =>{
                 console.log("new producer created [id:%s]", producer.id);
-                switch(this._kind) {
-                    case '0':
-                        for(let value of this._transports.values()) {
-                            if(value.appData.udn === transport.appData.udn && value.appData.direction === 'recv') {
-                                var rtpCapabilities = users.get(value.appData.udn)._rtpCapabilities;
-                                const {id, producerId, kind, rtpParameters} = await this.consume(value.id, producer.id, rtpCapabilities);
-                                if(users.get(value.appData.udn) && users.get(value.appData.udn)._notify) {
-                                    var notify = {
-                                        type : 'consume',
-                                        data : {udn, id, producerId, kind, rtpParameters, tracktype:producer.appData.type}
-                                    };
-                                    users.get(value.appData.udn)._notify(notify);
-                                }
+                if(this._kind == '0') {
+                    for(let _transport of this._transports.values()) {
+                        if(_transport.appData.udn === transport.appData.udn && _transport.appData.direction === 'recv') {
+                            let user = User.getUserByUdn(_transport.appData.udn);
+                            if(user && user._notify) {
+                                const {id, producerId, kind, rtpParameters} = await this.consume(_transport.id, producer.id, user._rtpCapabilities);
+                                let notify = {
+                                    type : 'consume',
+                                    data : {udn, id, producerId, kind, rtpParameters, tracktype:producer.appData.type}
+                                };
+                                user._notify(notify);
                             }
                         }
-                        break;
-                    case '1':
-                        for(let value of this._transports.values()) {
-                            if(value.appData.udn != transport.appData.udn && value.appData.direction === 'recv') {
-                                var rtpCapabilities = users.get(value.appData.udn)._rtpCapabilities;
-                                const {id, producerId, kind, rtpParameters} = await this.consume(value.id, producer.id, rtpCapabilities);
-                                if(users.get(value.appData.udn) && users.get(value.appData.udn)._notify) {
-                                    var notify = {
-                                        type : 'consume',
-                                        data : {udn, id, producerId, kind, rtpParameters, tracktype:producer.appData.type}
-                                    };
-                                    users.get(value.appData.udn)._notify(notify);
-                                }
+                    }
+                } else if(this._kind == '1') {
+                    for(let _transport of this._transports.values()) {
+                        if(_transport.appData.udn != transport.appData.udn && _transport.appData.direction === 'recv') {
+                            let user = User.getUserByUdn(_transport.appData.udn);
+                            if(user && user._notify) {
+                                const {id, producerId, kind, rtpParameters} = await this.consume(_transport.id, producer.id, user._rtpCapabilities);
+                                var notify = {
+                                    type : 'consume',
+                                    data : {udn, id, producerId, kind, rtpParameters, tracktype:producer.appData.type}
+                                };
+                                user._notify(notify);
                             }
                         }
-                        break;
-                    default:
-                        break;
+                    }
                 }
             });
-            transport.observer.on('newdataproducer')
+            transport.observer.on('newdataproducer', async (dataProducer)=>{
+                console.log("new dataProducer created [id:%s]", dataProducer.id);
+                if(this._kind == '1') {
+                    for(let _transport of this._transports.values()) {
+                        if(_transport.appData.udn != transport.appData.udn && _transport.appData.direction === 'recv') {
+                            let user = User.getUserByUdn(_transport.appData.udn);
+                            if(user && user._notify) {
+                                const dataConsumer = await this.consumeData(_transport.id, dataProducer.id);
+                                console.log('new dataConsumer created id[%s]', dataConsumer.id);
+                                var notify = {
+                                    type: 'consumedata',
+                                    data: {udn, id: dataConsumer.id, dataProducerId: dataConsumer.dataProducerId, sctpStreamParameters:dataProducer.sctpStreamParameters, label:dataProducer.label, protocol:dataProducer.protocol}
+                                }
+                                user._notify(notify);
+                            }
+                        }
+                    }
+                }
+            });
         }
         this._transports.set(transport.id, transport);
         return {
@@ -321,34 +334,9 @@ class Room extends EventEmitter{
     }
     async produceData(transportId, sctpStreamParameters, label, protocol) {
         var transport = this._transports.get(transportId);
-        var udn = transport.appData.udn;
-        if(transport && transport.appData.direction == 'send') {
+        if(transport && transport.appData.direction === 'send') {
             const dataProducer = await transport.produceData({sctpStreamParameters, label, protocol});
-            console.log('new dataProducer created id[%s]', dataProducer.id);
-            dataProducer.appData.udn = udn;
-            for(let i = 0; i < this._roomusers.length; i++) {
-                let user = User.getUserByUdn(this._roomusers[i].udn);
-                if(user && user._notify) {
-
-                }
-            }
-            if(remote_udn) {
-                var user = User.getUserByUdn(remote_udn);
-                if(user && user._notify) {
-                    var dataConsumer = this.getADataConsumerOfBDataProducer(remote_udn, udn);
-                    if(!dataConsumer) {
-                        var transport = this.getTransportByUdnAndDirection(remote_udn, 'recv');
-                        dataConsumer = await transport.consumeData({dataProducerId:dataProducer.id});
-                        dataConsumer.appData.udn = remote_udn;
-                        console.log('new dataConsumer created id[%s]', dataConsumer.id);
-                    }
-                    var notify = {
-                        type: 'consumedata',
-                        data: {udn, id: dataConsumer.id, dataProducerId: dataConsumer.dataProducerId, sctpStreamParameters, label, protocol}
-                    }
-                    user._notify(notify);
-                }
-            }
+            dataProducer.appData.udn = transport.appData.udn;
             return dataProducer.id;
         } else {
             return null;
@@ -356,7 +344,7 @@ class Room extends EventEmitter{
     }
     async consume(transportId, producerId, rtpCapabilities) {
         var transport = this._transports.get(transportId);
-        if(transport && transport.appData.direction == 'recv') {
+        if(transport && transport.appData.direction === 'recv') {
             if(this._mediasoupRouter.canConsume({producerId, rtpCapabilities})) {
                 const consumer = await transport.consume({producerId, rtpCapabilities});
                 consumer.appData.udn = transport.appData.udn;
@@ -377,6 +365,14 @@ class Room extends EventEmitter{
             }
         } else {
             return false;
+        }
+    }
+    async consumeData(transportId, dataProducerId) {
+        var transport = this._transports.get(transportId);
+        if(transport && transport.appData.direction === 'recv') {
+            const dataConsumer = await transport.consumeData({dataProducerId});
+            dataConsumer.appData.udn = transport.appData.udn;
+            return dataConsumer;
         }
     }
     async setMediaStream(udn, type, kind) {

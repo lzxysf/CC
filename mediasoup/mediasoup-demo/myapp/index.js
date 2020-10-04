@@ -415,16 +415,15 @@ async function isAudioOrVideoAllowed(roomId, kind) {
     return response;
 }
 
-async function preSendToUser(remote_udn) {
-    if(!getDataProducerByRemoteUdn(remote_udn)) {
-        const producer = await sendTransport.produceData({'label': 'chat', appData:{remote_udn}});
-        producer.appData.remote_udn = remote_udn;
+async function preSendToRoom() {
+    if(!getDataProducerByLabel('file')) {
+        const producer = await sendTransport.produceData({'label': 'file'});
         dataproducers.set(producer.id, producer);
     }
 }
 
-async function sendToUser(remote_udn, data) {
-    var dataProducer = getDataProducerByRemoteUdn(remote_udn);
+async function sendToRoom(data) {
+    var dataProducer = getDataProducerByLabel('file');
     dataProducer.send(data);
 }
 
@@ -452,9 +451,9 @@ function getProducerByKind(kind) {
     return null;
 }
 
-function getDataProducerByRemoteUdn(udn) {
+function getDataProducerByLabel(label) {
     for(let dataProducer of dataproducers.values()) {
-        if(dataProducer.appData.remote_udn === udn) {
+        if(dataProducer.label === label) {
             return dataProducer;
         }
     }
@@ -557,8 +556,8 @@ global.createRecvTransport = createRecvTransport;
 global.webcamProduce = webcamProduce;
 global.micProduce = micProduce;
 global.screenProduce = screenProduce;
-global.preSendToUser = preSendToUser;
-global.sendToUser = sendToUser;
+global.preSendToRoom = preSendToRoom;
+global.sendToRoom = sendToRoom;
 global.updateRtpCapabilities = updateRtpCapabilities;
 global.getOtherMediasInRoom = getOtherMediasInRoom;
 global.setMediaStream = setMediaStream;

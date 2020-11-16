@@ -1,3 +1,0 @@
-官方例子地址:https://github.com/versatica/mediasoup-demo
-
-官网地址:https://mediasoup.org/

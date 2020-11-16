@@ -1,0 +1,181 @@
+1.ffprobe--查看媒体文件头信息工具
+
+->ffprobe查看音视频文件格式
+ffprobe test.mp4
+
+->输出格式信息
+ffprobe -show_format test.mp4
+
+->输出每个流的具体信息（以json格式）
+ffprobe -print_format json -show_streams test.mp4
+
+->显示帧信息
+ffprobe -show_frames test.mp4
+
+->显示包信息
+ffprobe -show_packets test.mp4
+
+
+2.ffplay--播放媒体文件的工具
+
+->主要选项
+-x width				强制以width宽度显示
+-y height				强制以height高度显示
+-an						禁止音频
+-vn						禁止视频
+-ss pos					跳转到指定的位置（秒）
+-t duration				播放duration秒音视频
+-bytes					按字节跳转
+-f fmt					强制使用fmt格式
+-window_title title 	设置窗口标题（默认为输入文件名）
+-loop number			循环播放number次，number为0将一直循环
+
+->一些高级选项
+-sync type				设置主时钟为音频audio、视频video或者外部ext，默认为音频。主时钟用来音视频同步
+-threads count			设置线程个数
+-autoexit				播放完成后自动退出
+-acodec codec_name		强制指定音频解码器为codec_name
+-vcodec codec_name		强制指定视频解码器为codec_name
+-scodec codec_name		强制指定字幕解码器为codec_name
+
+->播放过程中一些快捷键
+-q ESC					退出
+f						全屏
+p						暂停
+w						切换显示模式（视频/音频波形/音频频带）
+
+
+3.ffmpeg--媒体文件转换工具
+
+->通用参数
+-f fmt 					指定格式
+-i filename				指定输入文件名
+-y						覆盖已有文件
+-t duration				指定时长
+-fs limit_size			设置文件大小的上限
+-ss time_off			从指定的时间开始
+-re						代表按照时间戳读取或发送数据，尤其在作为推流工具的时候一定要加上该参数，否则ffmpeg会按照最高速率向流媒体不停地发送数据
+-b						指定比特率（bit/s），ffmpeg默认采用的是VBR的，若指定改参数，则使用平均比特率
+
+->视频参数
+-vb						指定视频比特率（bit/s）
+-r rate					帧速率（fps）
+-s size					指定分辨率
+-aspect aspect			指定视频长宽比（4:3、16:9或1.33333、1.77777）
+-vn						取消视频的输出
+-vcodec codec			强制使用codec编码方式
+
+->音频参数
+-ab						指定音频比特率（bit/s），对于MP3的格式，想要听到较高品质的声音，建议设置160Kbit/s（单声道80Kbit/s）以上
+-aq						设置音频质量
+-ar						设置音频采样率（Hz）
+-ac channels			设置声道数，1就是单声道，2就是立体声
+-an						取消音频输出
+-acodec codec			强制使用codec编码方式
+-vol volume				设置录制音量大小
+
+->列出ffmpeg支持的所有格式
+ffmpeg -formats
+
+->剪切一段媒体文件
+ffmpeg -i test.mp4 -ss 00:00:5 -t 10 output.mp4
+要想使剪切的更加准确，需要使用ffmpeg进行重新编解码，如下
+ffmpeg -i test.mp4 -ss 00:00:5 -t 10 -c:v libx264 -c:a aac output.mp4
+
+->压缩视频
+ffmpeg -i test.mp4 -b:v 64k -r 20 -c:v libx264 -s 640x320 -strict -2 test_640x320_x264_64k_20.mp4
+
+->获取封面
+ffmpeg -i test.mp4 -ss 00:00:10 -f image2 -y test.jpg
+
+->生成yuv视频
+ffmpeg -i test.mp4 -ss 00:00:01 -t 10 -s 640x272 -pix_fmt yuv420p yuv_640_272.yuv
+
+->播放yuv视频
+//ffplay播放yuv格式文件需要指定长宽
+ffplay -s 352x288 akiyo_cif\(352_288\).yuv
+
+->视频中提取音频
+ffmpeg -i test.mp4 -vn test.mp3
+
+->视频中的音频去掉，只保留视频
+ffmpeg -i test.mp4 -an output.mp4
+
+->从mp4文件中抽取视频流导出为裸H264数据
+ffmpeg -i test.mp4 -an -vcodec copy -bsf:v h264_mp4toannexb output.h264
+这里使用了mp4toannexb这个bitstreasm filter来转换为原始的H264数据（同一编码也会有不同的封装格式）
+可以使用ffplay进行播放验证
+
+->从mp4文件中抽取音频流导出为裸pcm数据
+ffmpeg -i test.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
+-ar : 音频的采样率 44100
+-ac 2 : 双声道
+-f : 音频的数据存储格式
+s16le : s代表有符号的，16代表每一个数值用16位表示
+
+->播放pcm数据
+ffplay -ac 2 -ar 44100 -f s16le out.pcm
+因为pcm是裸数据，没有头，因此需要指定文件格式
+
+->将视频推送到流媒体服务器上
+ffmpeg -re -i test.mp4 -acodec copy -vcodec copy -f flv rtmp://127.0.0.1/test/mylive
+注意加re,代表按照时间戳读取或发送数据，尤其在作为推流工具的时候一定要加上该参数，否则ffmpeg会按照最高速率向流媒体不停地发送数据
+
+->将流媒体服务器上的流dump到本地
+ffmpeg -i rtmp://127.0.0.1/test/mylive -acodec copy -vcodec copy -f flv test.flv
+
+->给视频添加水印
+ffmpeg -i test.mp4 -i test.jpg -filter_complex "overlay=1:5" out.mp4
+//overlay=x:y 在(x,y)坐标处开始添加水印
+//test.jpg会按照原始图片尺寸添加到视频中，因此需要选择合适大小的图片
+
+->音视频倒放
+-->视频倒放，无音频
+ffmpeg -i test.mp4 -filter_complex [0:v]reverse[v] -map [v] -preset superfast reversed.mp4ffmpeg.exe -i test.mp4 -filter_complex [0:v]reverse[v] -map [v] -preset superfast reversed.mp4
+-->视频倒放，音频不变
+ffmpeg -i test.mp4 -vf reverse reversed.mp4
+
+
+4.ffmpeg采集设备
+
+->查看当前系统支持设备的基本信息
+ffmepg -devices
+
+->查看电脑上都有哪些设备
+ffmpeg -list_devices true -f dshow -i dummy			//windows
+
+->获取摄像头支持情况
+ffmpeg -list_options true -f dshow -i video="HD Pro Webcam C920"
+
+->摄像头录制
+ffmpeg -f dshow -i video="HD Pro Webcam C920" -f dshow -i audio="麦克风 (2- HD Pro Webcam C920)" -r 20 -t 10 camera.mp4
+
+->直接播放摄像头
+ffplay -f dshow -i video="HD Pro Webcam C920"
+
+->屏幕录制
+//录制后使用ffplay播放，使用其它播放器可能无法正确播放
+ffmpeg -f gdigrab -i desktop -vcodec libx264 -s 1280x720 -r 15 -t 10 screen.mp4
+
+->录制屏幕特定区域
+ffmpeg -f gdigrab -i desktop -r 25 -offset_x 100 -offset_y 100 -video_size 640x480 out.mp4
+
+5.调整音视频的播放速度
+
+->调整视频速率
+ffmpeg -i test.mp4 -an -filter:v "setpts=0.5*PTS" output.mp4
+//调整视频速率的原理为，修改视频的pts,dts
+//视频调整的速率范围为[0.25, 4]
+//如果只调整视频的话最好把音频禁掉
+//对视频进行加速时，如果不想丢帧，可以用-r参数指定输出视频FPS，方法如下
+ffmpeg -i test.mp4 -an -r 60 -filter:v "setpts=0.5*PTS" output.mp4
+
+->调整音频速率
+//调整音频速率的原理为：简单的方法是调整音频的采样率，但这种方法会改变音色，一般采用通过对原音进行重采样，差值等方法
+ffmpeg -i test.mp4 -vn -filter:a "atempo=2.0" output.mp4
+//倍率采样范围为[0.5,2.0]
+//如果需要调整为4倍，可以采用如下方式
+ffmpeg -i test.mp4 -vn -filter:a "atempo=2.0,atempo=2.0" output.mp4
+
+->同时调整音视频
+ffmpeg -i test.mp4 -filter_complex "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]" -map "[v]" -map "[a]" outpu.mp4

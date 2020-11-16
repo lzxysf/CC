@@ -11,7 +11,9 @@
         "osip.h": "c",
         "osip_port.h": "c",
         "istream": "c",
-        "ostream": "c"
+        "ostream": "c",
+        "avdevice.h": "c",
+        "avcodec.h": "c"
     },
     "files.autoSave": "afterDelay"
 }

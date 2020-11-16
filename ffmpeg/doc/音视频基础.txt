@@ -84,3 +84,31 @@ b.P、B帧是由I帧预测得到的，当I帧图像质量较差时，会影响�
 直到下一个GOP开始才有可能得以恢复，所以GOP也不宜过大。
 c.过长的GOP还会影响seek操作的响应速度，由于P、B帧是由前面的I或P帧预测得到的，
 解码某一个P或B帧时，需要先解码得到本GOP内的I帧及之前的N个预测帧才可以，因此GOP也不宜过大。
+
+
+7.YUV
+
+7.1.YUV概述
+YUV是一种彩色编码系统，主要用在视频、图形处理流水线中(pipeline)。
+相对于 RGB 颜色空间，设计 YUV 的目的就是为了编码、传输的方便，减少带宽占用和信息出错。
+Y代表亮度，UV代表色度、饱和度。
+YUV、YCbCr、YPbPr 几个概念其实是一回事儿。
+
+7.2.YUV存储分类
+平面存储planar：Y、U、V三个分量在存储的时候，通常以它们形成的平面(plane)来区分。
+比如对于一帧图像，先把所有的Y分量按序存储，接着是所有的U，最后是所有的V，也即YYYYYYYYUUVV，这就顺序形成三个平面。
+我们通常称这种能形成三个平面的存储格式为YUV420P，其实一般也就两种：YYYYYYYYUUVV和YYYYYYYYVVUU。
+
+交错存储packed：YUV交错存储，按像素点存储。如YUVYUVYUVYUV
+
+7.2.YUV420的分类
+I420->YYYYYYYYYYYY UUU VVV
+YV12->YYYYYYYYYYYY VVV UUU
+NV12->YYYYYYYYYYYY UVUVUV
+NV21->YYYYYYYYYYYY VUVUVU
+
+YUV主流的采样方式有三种，YUV4:4:4，YUV4:2:2，YUV4:2:0，但是YUV420是使用最广泛的
+YUV420很节省空间或带宽，大小只有RGB的1/2
+YUV420P包括I420和YV12，YUV420SP包括NV12和NV21
+YUV420P是planar存储，YUV420SP是semi-planar存储(半平面)，因为UV是交错存储的
+安卓设备采集的YUV通常为NV21，苹果设备采集的YUV通常为NV12

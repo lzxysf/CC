@@ -1,0 +1,6 @@
+ffmpeg/ffprobe/ffplay
+YUV Player Deluxe
+MediaInfo
+AdobeAudition
+H264Visa--强力的h264实时分析工具，能分析各种场合下的h264资源
+ElecardStreamEyeTools--一个强大的视频序列和码流分析软件，可用于YUV分析、H264分析。功能没有H264Visa强大，但是界面简洁

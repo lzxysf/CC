@@ -3,4 +3,7 @@ opens/libevent/libevent-2.1.11-stable
 opens/exosip
 .vscode
 node_modules
-back
+backup
+freeswitch
+mediasoup-demo
+source

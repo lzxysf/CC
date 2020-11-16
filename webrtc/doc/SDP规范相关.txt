@@ -1,0 +1,284 @@
+1.SDP规范
+1.1.SDP划分
+会话层	相当于全局变量
+媒体层	相当于局部变量
+
+1.2.会话层
+a.会话的名称和目的 Session Description
+b.会话的存活时间   Time Description  对于媒体来说，一般设置为0，表示无限期
+会话中包括多个媒体信息
+
+1.3.媒体层 Media Description
+媒体格式    音频，视频，应用数据（自定义）
+传输协议	IPV4/IPV6 TCP/UDP
+传输IP和端口	对于webrtc来说，使用ICE收集到的ip和端口
+媒体负载类型
+
+1.4.SDP格式
+由多个<type>=<value>组成
+一个会话级描述
+多个媒体级描述
+
+1.5.SDP结构
+Session Description
+Time Description
+Media Description
+
+1.6.Session Description
+v=(protocol version)
+o=(owner)
+s=(session name)
+c=*(conn info - optional if included at session-level)
+a=*(zero or more session attribute lines)
+
+v=0 SDP的版本号，不包括次版本号
+o=<username><session id><version><network type><address type><address>
+例 o=- 7017624586836067756 2 IN IP4 127.0.0.1
+s=<session name> 会话名 s=-表示忽略会话名
+c=<network type><address type><connection address>
+例 c=IN IP4 0.0.0.0
+
+1.7.Time Description
+t=(time the session is active)
+r=*(zero or more repeat times)
+
+1.8.Media Description
+m=(media name and transport address)
+c=*(conn info - optional if included at session-level)
+b=*(bandwidth information)
+a=*(zero or more session attribute lines)
+
+m=<media><port><transport><fmt/payload type list>
+例 m=audio 1024 UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126
+
+a=<TYPE>或a=<TYPE>:<VALUE>
+a=framerate:<帧速率>
+a=rtpmap:<fmt/payload type><encoding name>/<clock rate>[/<encodingparameters>]
+例 a=rtpmap:103 ISAC/16000
+a=fmtp:<format/payload type> parameters
+例 a=fmtp:103 apt=106
+
+
+2.WebRTC中的SDP
+webrtc中的SDP与常规的SDP有所不同，主要是为了适配webrtc的配置
+
+2.1.SDP组成
+会话元      v o t
+网络描述    c a=candidate
+流描述      m a=rtpmap a=fmtp
+安全描述    a=crypto a=ice-ufrag a=ice-pwd a=fingerprint
+服务质量    a=rtcp-fb a=group a=rtcpmux
+
+
+3.WebRTC Offer/Answer SDP
+//------------------------------- 会话层 -------------------------------
+// version <sdp版本号，不包括次版本号>
+v=0
+// 过程中有改变编码之类的操作,重新生成sdp时,session id不变,session version加1
+// owner <user name> <session id> <session version> <net type> <addr type> <addr>
+o=- 4571619080104764276 2 IN IP4 127.0.0.1
+// session <session name>
+s=-
+// webrtc始终是0
+// time <开始时间> <结束时间>
+t=0 0
+// attribute,0 1绑定一个传输通道传输,与下方的a=mid相匹配
+a=group:BUNDLE 0 1
+// media stream id缩写msid,webrtc media stream缩写WMS
+a=msid-semantic: WMS 9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU
+
+//------------------------------- 媒体层:以下为音频描述信息 -------------------------------
+// 端口9表示不接收数据;secret audio video protocol family缩写SAVPF
+// media <媒体类型> <port> <传输协议> <payload type集>
+m=audio 9 UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 110 112 113 126
+// 该属性webrtc并没有使用
+// connection
+c=IN IP4 0.0.0.0
+a=rtcp:9 IN IP4 0.0.0.0
+// 以下两行ice协商过程中的安全验证信息
+a=ice-ufrag:FvYc
+a=ice-pwd:st4MHVcrFq+pnZgFNV2qSmW0
+// trickle,即sdp里面描述媒体信息和ice候选项的信息可以分开传输，节省了时间提高了效率（ice candidate的收集是很耗时的）
+a=ice-options:trickle
+// dtls协商过程中需要的认证信息,sha-256加密算法
+a=fingerprint:sha-256 94:85:06:47:AD:89:09:7D:AF:E0:48:B7:58:55:1D:44:48:34:8F:4A:39:98:62:44:B0:19:BA:03:00:B9:94:66
+// actpass既可以是客户端,也可以是服务器;active客户端;passive服务器
+a=setup:actpass
+// 前面a=group:BUNDLE中用到的媒体标识
+a=mid:0
+// 要在rtp头部中加入音量信息
+a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level
+a=extmap:2 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01
+a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:4 urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id
+a=extmap:5 urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id
+// 仅发送,其他类型sendrecv,recvonly,sendonly,inactive
+a=sendonly
+// 与前面的msid相同,第二个为track id
+a=msid:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU a1987158-6a67-4b19-9931-5cd2a8d2f6f8
+// rtp,rtcp使用同一个端口来传输（复用）
+a=rtcp-mux
+// payload type的描述
+a=rtpmap:111 opus/48000/2
+a=rtcp-fb:111 transport-cc
+a=fmtp:111 minptime=10;useinbandfec=1
+a=rtpmap:103 ISAC/16000
+a=rtpmap:104 ISAC/32000
+a=rtpmap:9 G722/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:8 PCMA/8000
+a=rtpmap:106 CN/32000
+a=rtpmap:105 CN/16000
+a=rtpmap:13 CN/8000
+a=rtpmap:110 telephone-event/48000
+a=rtpmap:112 telephone-event/32000
+a=rtpmap:113 telephone-event/16000
+a=rtpmap:126 telephone-event/8000
+a=ssrc:1196321802 cname:kDl3rfnZtJEKUJsa
+a=ssrc:1196321802 msid:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU a1987158-6a67-4b19-9931-5cd2a8d2f6f8
+a=ssrc:1196321802 mslabel:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU
+a=ssrc:1196321802 label:a1987158-6a67-4b19-9931-5cd2a8d2f6f8
+
+//------------------------------- 媒体层:以下为视频描述信息 -------------------------------
+m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 122 127 121 125 107 108 109 124 120 123 119 114 115 116
+c=IN IP4 0.0.0.0
+// CT是设置整个会议的带宽，AS是设置单个会话的带宽，它们的单位都是kbit/s。setRemoteDescription之前修改
+// bandwidth <类型>:<带宽>
+b=AS:100
+
+a=rtcp:9 IN IP4 0.0.0.0
+a=ice-ufrag:FvYc
+a=ice-pwd:st4MHVcrFq+pnZgFNV2qSmW0
+a=ice-options:trickle
+a=fingerprint:sha-256 94:85:06:47:AD:89:09:7D:AF:E0:48:B7:58:55:1D:44:48:34:8F:4A:39:98:62:44:B0:19:BA:03:00:B9:94:66
+a=setup:actpass
+a=mid:1
+a=extmap:14 urn:ietf:params:rtp-hdrext:toffset
+a=extmap:13 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time
+a=extmap:12 urn:3gpp:video-orientation
+a=extmap:2 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01
+a=extmap:11 http://www.webrtc.org/experiments/rtp-hdrext/playout-delay
+a=extmap:6 http://www.webrtc.org/experiments/rtp-hdrext/video-content-type
+a=extmap:7 http://www.webrtc.org/experiments/rtp-hdrext/video-timing
+a=extmap:8 http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07
+a=extmap:9 http://www.webrtc.org/experiments/rtp-hdrext/color-space
+a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:4 urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id
+a=extmap:5 urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id
+a=sendonly
+a=msid:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU f2b07fae-01be-4c8e-ac69-895c1d44ff87
+a=rtcp-mux
+// 尽可能的减少rtcp包的发送，只发丢包信息
+a=rtcp-rsize
+// payload type的描述,编码器VP8,时钟采样率90000
+a=rtpmap:96 VP8/90000
+// 对rtpmap 96的描述,google标准的接收端带宽评估
+a=rtcp-fb:96 goog-remb
+// 对rtpmap 96的描述,传输端的带宽评估
+a=rtcp-fb:96 transport-cc
+// 对rtpmap 96的描述,支持客户端请求i帧,codec control using RTCP feedback message缩写ccm,Full Intra Request缩写fir
+a=rtcp-fb:96 ccm fir
+// 支持丢包重传
+a=rtcp-fb:96 nack
+// 支持i帧重传
+a=rtcp-fb:96 nack pli
+// rtx丢包重传
+a=rtpmap:97 rtx/90000
+// apt关联
+a=fmtp:97 apt=96
+a=rtpmap:98 VP9/90000
+a=rtcp-fb:98 goog-remb
+a=rtcp-fb:98 transport-cc
+a=rtcp-fb:98 ccm fir
+a=rtcp-fb:98 nack
+a=rtcp-fb:98 nack pli
+a=fmtp:98 profile-id=0
+a=rtpmap:99 rtx/90000
+a=fmtp:99 apt=98
+a=rtpmap:100 VP9/90000
+a=rtcp-fb:100 goog-remb
+a=rtcp-fb:100 transport-cc
+a=rtcp-fb:100 ccm fir
+a=rtcp-fb:100 nack
+a=rtcp-fb:100 nack pli
+a=fmtp:100 profile-id=2
+a=rtpmap:101 rtx/90000
+a=fmtp:101 apt=100
+a=rtpmap:102 H264/90000
+a=rtcp-fb:102 goog-remb
+a=rtcp-fb:102 transport-cc
+a=rtcp-fb:102 ccm fir
+a=rtcp-fb:102 nack
+a=rtcp-fb:102 nack pli
+a=fmtp:102 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f
+a=rtpmap:122 rtx/90000
+a=fmtp:122 apt=102
+a=rtpmap:127 H264/90000
+a=rtcp-fb:127 goog-remb
+a=rtcp-fb:127 transport-cc
+a=rtcp-fb:127 ccm fir
+a=rtcp-fb:127 nack
+a=rtcp-fb:127 nack pli
+a=fmtp:127 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42001f
+a=rtpmap:121 rtx/90000
+a=fmtp:121 apt=127
+a=rtpmap:125 H264/90000
+a=rtcp-fb:125 goog-remb
+a=rtcp-fb:125 transport-cc
+a=rtcp-fb:125 ccm fir
+a=rtcp-fb:125 nack
+a=rtcp-fb:125 nack pli
+a=fmtp:125 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f
+a=rtpmap:107 rtx/90000
+a=fmtp:107 apt=125
+a=rtpmap:108 H264/90000
+a=rtcp-fb:108 goog-remb
+a=rtcp-fb:108 transport-cc
+a=rtcp-fb:108 ccm fir
+a=rtcp-fb:108 nack
+a=rtcp-fb:108 nack pli
+a=fmtp:108 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f
+a=rtpmap:109 rtx/90000
+a=fmtp:109 apt=108
+a=rtpmap:124 H264/90000
+a=rtcp-fb:124 goog-remb
+a=rtcp-fb:124 transport-cc
+a=rtcp-fb:124 ccm fir
+a=rtcp-fb:124 nack
+a=rtcp-fb:124 nack pli
+a=fmtp:124 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=4d0032
+a=rtpmap:120 rtx/90000
+a=fmtp:120 apt=124
+a=rtpmap:123 H264/90000
+a=rtcp-fb:123 goog-remb
+a=rtcp-fb:123 transport-cc
+a=rtcp-fb:123 ccm fir
+a=rtcp-fb:123 nack
+a=rtcp-fb:123 nack pli
+a=fmtp:123 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=640032
+a=rtpmap:119 rtx/90000
+a=fmtp:119 apt=123
+// fec冗余编码，rtp头部负载类型116，否则就是各编码原生负责类型
+a=rtpmap:114 red/90000
+
+a=rtpmap:115 rtx/90000
+a=fmtp:115 apt=114
+//支持ULP FEC
+a=rtpmap:116 ulpfec/90000
+
+// 一个cname可以对应多个ssrc
+a=ssrc-group:FID 790880351 2784909276
+a=ssrc:790880351 cname:kDl3rfnZtJEKUJsa
+a=ssrc:790880351 msid:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU f2b07fae-01be-4c8e-ac69-895c1d44ff87
+a=ssrc:790880351 mslabel:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU
+a=ssrc:790880351 label:f2b07fae-01be-4c8e-ac69-895c1d44ff87
+a=ssrc:2784909276 cname:kDl3rfnZtJEKUJsa
+a=ssrc:2784909276 msid:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU f2b07fae-01be-4c8e-ac69-895c1d44ff87
+a=ssrc:2784909276 mslabel:9TH6yxQRgyF6Yna81tiidOMebGqKms24SCEU
+a=ssrc:2784909276 label:f2b07fae-01be-4c8e-ac69-895c1d44ff87
+
+4.ssrc和cname
+一个cname可以对应多个ssrc
+cname代表一个客户端的id，一个客户端可能会有多路数据流，通常来说至少一路音频一路视频，如果有两个摄像头就会有两路视频流。
+这几路数据流的ssrc都不一致，但是他们的cname是一致的，用来表示他们是哪个客户端的数据。
+

@@ -1,6 +1,7 @@
 1.H264结构图
 H264结构图见当前目录"H264结构图.jpg"
 
+
 2.H264压缩原理
 H264压缩技术主要采用了以下几种方法对视频数据进行压缩。包括：
 帧内预测压缩，解决的是空域数据冗余问题。
@@ -38,20 +39,22 @@ CABAC属于无损压缩技术。
 无损压缩技术大家最熟悉的可能就是哈夫曼编码了，给高频的词一个短码，给低频词一个长码从而达到数据压缩的目的。MPEG-2中使用的VLC就是这种算法。
 CABAC也是给高频数据短码，给低频数据长码。同时还会根据上下文相关性进行压缩，这种方式又比VLC高效很多。
 
+
 3.H264编码分层
 H.264原始码流(裸流)是由一个接一个NALU组成，它的功能分为两层，VCL(视频编码层)和 NAL(网络提取层).
-1）NAL层 （视频数据网络抽象层）
+3.1.NAL层 （视频数据网络抽象层）
 因为H264最终还是要在网络上进行传输，在传输的时候，网络包的最大传输单元是1500字节，一个H264的帧往往是大于1500字节的，
 所以需要将一个帧拆成多个包进行传输。这些拆包、组包等工作都在NAL层去处理。
-2）VCL层 （视频编码层）
+3.2.VCL层 （视频编码层）
 对视频的原始数据进行压缩。
 
+
 4.H264码流的基本概念
-1）SODB ，String Of Data Bits 原始数据比特流
+4.1.SODB ，String Of Data Bits 原始数据比特流
 因为它是流的形式，所以长度不一定是8倍数，它是由 VLC 层产生的。由于我们计算机是以8倍数去处理数据所以计算机在处理H264时，就需要 RBSP。
-2）RBSP，SODB + trailing bits （原始字节序列载荷）
+4.2.RBSP，SODB + trailing bits （原始字节序列载荷）
 由于它是一个压缩流，SODB 不知道是在何处结束，所以算法在SODB最后一位补一个1，没有按字节对齐的则补 0。
-3）EBSP （扩展字节序列载荷）
+4.3.EBSP （扩展字节序列载荷）
 NALU的起始码一般是 0x00000001 或者是 0x000001。
 所以在h264码流中规定每有两个连续的00 00，就在其后面增加一个0x03。
 这样在h264的码流中就不会检测到0x00000001或0x000001，从而误认为是起始码。
@@ -64,13 +67,18 @@ Start Code Prefix(3 bytes) + NALU + Start Code Prefix(3 bytes) + NALU + ... + = 
 起始码包括两种：3 字节(0x000001) 和 4 字节(0x00000001)，在 SPS、PPS 和 Access Unit 的第一个 NALU 使用 4 字节起始码，其余情况均使用 3 字节起始码。
 SODB还可以划分，SODB = Slice Header + Slice Data
 
+
 5.SPS和PPS
 一般情况SPS和PPS的NALU通常位于整个码流的起始位置。但在某些特殊情况下，在码流中间也可能出现这两种结构，主要原因可能为：
 a.解码器需要在码流中间开始解码
 b.编码器在编码的过程中改变了码流的参数（如图像分辨率等）
+
 5.1.SPS
-SPS即Sequence Paramater Set，又称作序列参数集。SPS中保存了一组编码视频序列(coded video sequence)的全局参数。
+SPS即Sequence Paramater Set，又称作序列参数集。
+NALU的类型为7时(nal_unit_type=7)，NALU中保存的数据为SPS。
+SPS中保存了一组编码视频序列(coded video sequence)的全局参数。
 其中主要的语法元素及含义如下：
+
 5.1.1.profile_idc
 表示视频流的压缩特性。占用SPS的第一个字节。
 H.264中定义了三种常用的profile，包括baseline profile, main profile, extended profile
@@ -78,7 +86,65 @@ profile_idc = 66 → baseline profile
 profile_idc = 77 → main profile
 profile_idc = 88 → extended profile
 它们的关系及各自包含的压缩特性见本目录下profile-1.jpg
-
+压缩率baseline < main < high
+baseline只有I帧与P帧，main和high有I,P,B三种帧
 在新版的标准中，还包括了High、High 10、High 4:2:2、High 4:4:4、High 10 Intra、High 4:2:2 Intra、High 4:4:4 Intra、CAVLC 4:4:4 Intra等，
-每一种都由不同的profile_idc表示，它们都是在main profile的基础上衍生而来。
-它们的关系及各自包含的压缩特性见本目录下profile-2.jpg
+每一种都由不同的profile_idc表示，它们都是在main profile的基础上衍生而来。它们的关系及各自包含的压缩特性见本目录下profile-2.jpg
+
+constraint_set0_flag ~ constraint_set5_flag是在编码的档次方面对码流增加的其他一些额外限制性条件。
+
+5.1.2.level_idc
+level指的是解码性能。
+分辨率，帧率，码率越高，level则越高。
+
+5.1.3.seq_parameter_set_id
+表示当前的SPS的id。通过该id值，PPS可以引用其代表的SPS中的参数。
+
+5.1.4.SPS分辨率相关参数
+pic_width_in_mbs_minus1         图像宽度包含的宏块个数-1
+pic_height_in_mbs_minus1        图像高度包含的宏块个数-1
+宏块是16x16，因此可由以上参数计算图像的宽和高
+pic_width_in_mbs_minus1=21      (21 + 1) * 16 = 352
+pic_height_in_mbs_minus1=17     (17 + 1) * 16 = 288
+
+frame_mbs_only_flag         帧编码还是场编码（场是隔行扫描，产生两张图）
+
+frame_cropping_flag         图像是否需要裁剪
+frame_crop_left_offset      减去左侧的偏移量
+frame_crop_right_offset     减去右侧的偏移量
+frame_crop_top_offset       减去顶部的偏移量
+frame_crop_bottom_offset    减去底部的偏移量
+
+5.1.5.SPS帧相关参数
+log2_max_frame_num_minus4   帧数
+log2_max_frame_num_minus4=0 则帧数为2^(0+4)=16
+
+max_num_ref_frames          参考帧数
+pic_order_cnt_type          显示帧序号 0 1 2
+
+5.1.6.SPS帧率的计算
+framerate = (float)(sps->vui.vui_time_scale)/
+            (float)(sps->vui.vui_num_units_in_tick)/
+            2;
+
+5.2.PPS
+PPS即Picture Paramater Set，又称作图像参数集。
+NALU的类型为8时(nal_unit_type=8)，NALU中保存的数据为PPS。
+
+5.2.1.PPS中重要参数
+pic_parameter_set_id        表示当前PPS的ID
+某个PPS在码流中会被相应的slice引用，slice引用PPS的方式就是在Slice header中保存PPS的id值，该值的取值范围为[0,255]
+
+seq_parameter_set_id        表示当前PPS所引用的激活的SPS的ID
+通过这种方式，PPS中也可以取到对应SPS中的参数。该值的取值范围为[0,31]
+
+entropy_coding_mode_flag    熵编码模式标识，为1表示CABAC
+
+num_slice_groups_minus1     分片数量
+num_slice_groups_minus1=0时，此时分片数量为1，表示一帧图像中只有一个分片
+
+weighted_pred_flag          标识位，表示在P/SP slice中是否开启加权预测
+
+weighted_bipred_idc         表示在B Slice中加权预测的方法
+取值范围为[0,2]，0表示默认加权预测，1表示显式加权预测，2表示隐式加权预测
+

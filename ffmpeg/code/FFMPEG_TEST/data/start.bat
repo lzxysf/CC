@@ -1,0 +1,1 @@
+set SDL_AUDIODRIVER=directsound

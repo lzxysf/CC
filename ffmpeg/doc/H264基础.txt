@@ -1,13 +1,15 @@
 1.H264结构图
 H264结构图见当前目录"H264结构图.jpg"
-
+对于H264中出现的一些概念从大到小排序依次是：序列、图像、片组、片(slice)、NALU、宏块、亚宏块、块、像素。
+一幅图像由1-N个片组构成，而每一个片组又由1-N个片构成，一个片由一个NALU或三个NALU（假如有数据分割）构成。
+图像解码过程中总是按照片进行解码，然后按照片组将解码宏块重组成图像。从这种意义上讲，片实际上是最大的解码单元。
 
 2.H264压缩原理
 H264压缩技术主要采用了以下几种方法对视频数据进行压缩。包括：
 帧内预测压缩，解决的是空域数据冗余问题。
 帧间预测压缩（运动估计与补偿），解决的是时域数据冗余问题。
-整数离散余弦变换（DCT），将空间上的相关性变为频域上无关的数据然后进行量化。
-CABAC压缩。
+变换编码：整数离散余弦变换（DCT），将空间上的相关性变为频域上无关的数据然后进行量化。
+熵编码：CABAC压缩。
 
 2.1.宏块、子块
 H264默认是使用 16X16 大小的区域作为一个宏块，也可以划分成 8X8 大小。
@@ -15,7 +17,7 @@ H264对比较平坦的图像使用 16X16 大小的宏块。但为了更高的压
 子块的大小可以是 8X16､ 16X8､ 8X8､ 4X8､ 8X4､ 4X4非常的灵活。
 
 2.2.I帧P帧B帧
-见上文。
+见音视频基础.txt
 
 2.3.DCT变换
 DCT变换的全称是离散余弦变换(Discrete Cosine Transform)，主要用于将数据或图像的压缩，能够将空域的信号转换到频域上，
@@ -67,6 +69,11 @@ Start Code Prefix(3 bytes) + NALU + Start Code Prefix(3 bytes) + NALU + ... + = 
 起始码包括两种：3 字节(0x000001) 和 4 字节(0x00000001)，在 SPS、PPS 和 Access Unit 的第一个 NALU 使用 4 字节起始码，其余情况均使用 3 字节起始码。
 SODB还可以划分，SODB = Slice Header + Slice Data
 
+一个NAL Unit都是由一个NAL Header和NAL Body组成，其中NAL Body就是EBSP。
+对于基本版本的H.264标准（不考虑SVC和MVC扩展），一个NAL Header的长度固定为1，即8bit。这8bit的含义分别为：
+forbidden_zero_bit：第1位，每一个NAL Header的第一个bit，规定必须为0；
+nal_ref_idc：第2~3位，主要表示NAL的优先级。当该值为正时，表示当前NAL Unit中包含了SPS、PPS和作为参考帧的Slice等重要数据。
+nal_unit_type：第4~8位，表示NAL Unit的类型，包括VCL层和非VCL层的多种数据类型。常见的nal_unit_type取值有：7表示SPS，8表示PPS，5表示IDR帧，1表示非IDR帧等。nal_unit_type = NALU类型 & 00011111。
 
 5.SPS和PPS
 一般情况SPS和PPS的NALU通常位于整个码流的起始位置。但在某些特殊情况下，在码流中间也可能出现这两种结构，主要原因可能为：
@@ -148,3 +155,32 @@ weighted_pred_flag          标识位，表示在P/SP slice中是否开启加权
 weighted_bipred_idc         表示在B Slice中加权预测的方法
 取值范围为[0,2]，0表示默认加权预测，1表示显式加权预测，2表示隐式加权预测
 
+
+6.片(Slice)
+在H.264进行编码的过程中，每一帧的图像被分为一个或多个条带(slice)进行编码。
+每一个Slice总体来看都由两部分组成，一部分作为Slice header，用于保存Slice的总体信息（如当前Slice的类型等），
+另一部分为Slice body，通常是一组连续的宏块结构（或者宏块跳过信息）
+
+6.1.Slice header结构
+Slice header中主要保存了当前slice的一些全局的信息，slice body中的宏块在进行解码时需依赖这些信息。
+其中比较常见的一些语法元素有：
+--->first_mb_in_slice
+当前slice中包含的第一个宏块在整帧中的位置
+--->slice_type
+当前slice的类型
+H.264的条带也具有不同的类型，其中最常用的有I条带、P条带和B条带等。
+另外，为了支持码流切换，在扩展档次中还定义了SI和SP片。
+I条带：帧内编码条带，只包含I宏块；
+P条带：单向帧间编码条带，可能包含P宏块和I宏块；
+B条带：双向帧间编码条带，可能包含B宏块和I宏块；
+--->pic_parameter_set_id
+当前slice所依赖的pps的id
+--->colour_plane_id
+当标识位separate_colour_plane_flag为true时，colour_plane_id表示当前的颜色分量，0、1、2分别表示Y、U、V分量
+--->frame_num
+表示当前帧序号的一种计量方式
+--->field_pic_flag
+场编码标识位。当该标识位为1时表示当前slice按照场进行编码，该标识位为0时表示当前slice按照帧进行编码
+--->GOP中解码帧序号
+--->预测权重
+--->滤波

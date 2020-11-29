@@ -60,7 +60,7 @@ H.264原始码流(裸流)是由一个接一个NALU组成，它的功能分为两
 NALU的起始码一般是 0x00000001 或者是 0x000001。
 所以在h264码流中规定每有两个连续的00 00，就在其后面增加一个0x03。
 这样在h264的码流中就不会检测到0x00000001或0x000001，从而误认为是起始码。
-
+4.4.NALU(NAL UNIT)
 SODB + trailing bits = RBSP
 RBSP + (0x03) = EBSP
 NAL Header(1 Byte) + EBSP = NALU

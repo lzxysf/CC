@@ -1,0 +1,9 @@
+1.H264压缩率一般在100倍以上，即一个100M的YUV数据那么经过H264压缩后体积小于1M
+
+2.H264的码流是由一个个NALU组成的，NALU = NAL Header + NAL Body，
+NALU是有不同类型的，NAL Header中的字段nal_unit_type表示NALU的类型，7表示SPS，8表示PPS，5表示IDR帧，1表示非IDR帧等
+当nal_unit_type=7时, NAL Body是SPS；当nal_unit_type=8时, NAL Body是PPS；当nal_unit_type=5时，NAL Body是Slice(片)
+
+3.一般情况下，一个NALU就对应一个视频帧，但是也有可能视频帧较大，多个NALU组合成一个视频帧。
+
+4.BMP格式图像中包含的就是RGB的原始数据。

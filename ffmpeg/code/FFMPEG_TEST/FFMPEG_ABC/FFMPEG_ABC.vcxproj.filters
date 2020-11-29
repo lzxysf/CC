@@ -18,34 +18,37 @@
     <ClCompile Include="src\01_encode_video.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\01_open_camera_sdl.cc">
+    <ClCompile Include="src\02_open_camera_sdl.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\01_open_camera_sdl_thread.cc">
+    <ClCompile Include="src\03_open_camera_sdl_thread.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\01_screen_recorder_sdl_thread.cc">
+    <ClCompile Include="src\04_screen_recorder_sdl_thread.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\02_decode_video.c">
+    <ClCompile Include="src\05_decode_video.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\02_video_player_h264_sdl.cc">
+    <ClCompile Include="src\06_video_player_h264_sdl.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\02_video_player_h264_sdl_thread.cc">
+    <ClCompile Include="src\07_video_player_h264_sdl_thread.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\03_video_player_yuv_sdl_thread.cc">
+    <ClCompile Include="src\08_video_player_yuv_sdl_thread.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\04_ffmpeg_pure_decoder.cc">
+    <ClCompile Include="src\09_ffmpeg_pure_decoder.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\05_audio_player_aac_sdl.cc">
+    <ClCompile Include="src\11_audio_player_aac_sdl.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\06_audio_player_pcm_sdl.cc">
+    <ClCompile Include="src\12_basic_api_param.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\10_audio_player_pcm_sdl.cc">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

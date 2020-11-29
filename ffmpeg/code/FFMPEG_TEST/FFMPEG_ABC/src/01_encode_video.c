@@ -1,4 +1,9 @@
-#if 1
+/*
+* 这是一个纯净的编码器，把一个yuv文件编码成了h264文件
+* 只使用了libavcodec，没有使用libavformat
+* 首先使用fread将yuv文件读取到一个个AVFrame里，然后使用avcodec_encode_video2将AVFrame编码为AVPacket，最后使用fwrite将AVPacket写入H264文件
+*/
+#if 0
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,10 +34,16 @@ int n_Total_Frames = 300;
 int open_encoder()
 {
 	avcodec_register_all();
-
 	codec = avcodec_find_encoder(AV_CODEC_ID_H264);
-
+	if (!codec) {
+		printf("codec not found!");
+		exit(0);
+	}
 	codec_ctx = avcodec_alloc_context3(codec);
+	if (!codec_ctx) {
+		printf("codec_ctx alloc fail!");
+		exit(0);
+	}
 	codec_ctx->bit_rate = 200000;
 	codec_ctx->width = 352;
 	codec_ctx->height = 288;
@@ -122,7 +133,8 @@ int main()
 			av_packet_unref(&packet);
 		}
 	}
-	//read the last frame if it exists
+	//上面的for循环完成后，所有要编码的数据都放入到了编码器中，但是此时不一定所有的编码都完成了
+	//因此在此处调用while循环直到所有的帧都编码完成
 	while (got_output)
 	{
 		avcodec_encode_video2(codec_ctx, &packet, NULL, &got_output);

@@ -167,8 +167,8 @@ document.getElementById('upload').onchange = function(evt){
         var step = width * height * 3 / 2;
 
         var interval = setInterval(() => {
-			var reader = new FileReader();
-			var blob = file.slice(start, start + step);
+			var reader = new FileReader(); //FileReader不能多次使用用于读取，每次读取文件都要新创建一个FileReader，否则可能抛出异常
+			var blob = file.slice(start, start + step); //分片读取文件，一次读一帧图片大小的字节数，不要一次读取整个文件，否则文件大了会卡顿
 			start += step;
             reader.readAsArrayBuffer(blob);
             reader.onload = function () {
@@ -178,7 +178,7 @@ document.getElementById('upload').onchange = function(evt){
             if(start >= file.size)
             {
                 //clearInterval(interval);
-				start = 0;
+				start = 0; //从头开始渲染，循环渲染
             }
         }, 40);
     }
